@@ -38,17 +38,6 @@ function cu(cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A,V,PD,P,T,An}
         cft.analytic)
 end
 
-# TODO this is somewhat kludgy, not sure why cu was converting these back
-#function CUDA.cu(P::FFTW.rFFTWPlan)
-#    return plan_rfft(cu(zeros(real(eltype(P)), P.sz)), P.region)
-#end
-#CUDA.cu(P::CUFFT.rCuFFTPlan) = P
-
-#function CUDA.cu(P::FFTW.cFFTWPlan)
-#    return plan_fft(cu(zeros(eltype(P), P.sz)), P.region)
-#end
-#CUDA.cu(P::CUFFT.cCuFFTPlan) = P
-
 # Only convert FFTW plans to CUFFT plans if CUDA is actually functional
 function CUDA.cu(P::FFTW.rFFTWPlan)
     if CUDA.functional()
