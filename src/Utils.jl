@@ -57,7 +57,6 @@ function CUDA.cu(P::FFTW.rFFTWPlan)
         return P   # fallback to CPU FFTW plan
     end
 end
-CUDA.cu(P::CUFFT.rCuFFTPlan) = P
 
 function CUDA.cu(P::FFTW.cFFTWPlan)
     if CUDA.functional()
@@ -66,7 +65,7 @@ function CUDA.cu(P::FFTW.cFFTWPlan)
         return P   # fallback to CPU FFTW plan
     end
 end
-CUDA.cu(P::CUFFT.cCuFFTPlan) = P
+CUDA.cu(P::CUDA.CUFFT.Plan) = P
 
 Adapt.adapt(::Type{Array{T}}, P::FFTW.FFTWPlan{T}) where {T} = P
 function Adapt.adapt(::Type{Array{T}}, P::FFTW.rFFTWPlan) where {T}
