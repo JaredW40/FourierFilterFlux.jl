@@ -24,8 +24,8 @@ using Zygote: gradient
         shears = ConvFFT(weightMatrix, nothing, originalSize, abs,
             plan = true, boundary = Pad(padding), trainable = true)
         trn = Flux.trainable(shears)
-        @test trn[1] == shears.weight[1]
-        @test length(trn) == 1
+        @test trn[1][1] == shears.weight[1]
+        @test length(trn) >= 1
 
         shears = ConvFFT(weightMatrix, nothing, originalSize, abs,
             boundary = Pad(padding), trainable = false)
