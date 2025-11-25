@@ -149,7 +149,9 @@ using Zygote: gradient
             @test shears.σ == abs
             @test shears.bias == nothing
             @test shears.bc.padBy == (5,)
-            @test Flux.trainable(shears)[1] == shears.weight[1]
+            trn = Flux.trainable(shears)
+            @test trn[1][1] == shears.weight[1] 
+            @test length(trn) >= 1
 
             shears = ConvFFT(weightMatrix, nothing, originalSize, abs,
                 plan = true, boundary = Pad(padding), trainable = false)
@@ -167,7 +169,9 @@ using Zygote: gradient
             @test shears.σ == abs
             @test shears.bias == nothing
             @test typeof(shears.bc) <: Sym
-            @test Flux.trainable(shears)[1] == shears.weight[1]
+            trn = Flux.trainable(shears)
+            @test trn[1][1] == shears.weight[1]
+            @test length(trn) >= 1
             x = randn(21, 1, 10)
             ∇ = gradient((x) -> shears(x)[1, 1, 1, 3], x)
             @test minimum(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
@@ -179,7 +183,9 @@ using Zygote: gradient
             @test shears.σ == abs
             @test shears.bias == nothing
             @test typeof(shears.bc) <: FourierFilterFlux.Periodic
-            @test Flux.trainable(shears)[1] == shears.weight[1]
+            trn = Flux.trainable(shears)
+            @test trn[1][1] == shears.weight[1]
+            @test length(trn) >= 1
             x = randn(21, 1, 10)
             ∇ = gradient((x) -> shears(x)[1, 1, 1, 3], x)
             @test minimum(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
