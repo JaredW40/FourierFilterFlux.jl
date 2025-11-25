@@ -1,3 +1,4 @@
+using Zygote: gradient
 # test padding
 @testset "padding dimension" begin
     @testset "padding 1D" begin
