@@ -1,3 +1,4 @@
+using Zygote: gradient
 # TODO: add some checks for different boundary conditions
 # TODO: add checks for analytic wavelets
 # ConvFFT constructor tests
@@ -97,11 +98,11 @@
         if CUDA.functional()
             gpuVer = shears |> gpu
             @test gpuVer.weight[1] isa CuArray
-            @test gpuVer.fftPlan isa CUFFT.rCuFFTPlan
+            @test gpuVer.fftPlan isa CUDA.CUFFT.AbstractCuFFTPlan
             if !(gpuVer.weight[1] isa CuArray)
                 println("gpuVer.weight is of type $(typeof(gpuVer.weight))")
             end
-            if !(gpuVer.fftPlan isa CUFFT.rCuFFTPlan)
+            if !(gpuVer.fftPlan isa CUDA.CUFFT.AbstractCuFFTPlan)
                 println("gpuVer.fftPlan is of type $(typeof(gpuVer.fftPlan))")
             end
         end
@@ -336,7 +337,7 @@
         if CUDA.functional()
             gpuVer = shears |> gpu
             @test gpuVer.weight[1] isa CuArray
-            @test gpuVer.fftPlan isa CUFFT.rCuFFTPlan
+            @test gpuVer.fftPlan isa CUDA.CUFFT.AbstractCuFFTPlan
         end
         # extra channel dimension
         originalSize = (20, 16, 1, 10)
