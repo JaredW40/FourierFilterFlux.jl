@@ -69,7 +69,7 @@ adapt(::Type{<:CuArray}, x::T) where {T<:CUDA.CUFFT.CuFFTPlan} = x
 # is actually converting
 function adapt(::Union{Type{<:Array},Flux.FluxCPUAdaptor},
         x::T) where {T<:CUDA.CUFFT.CuFFTPlan}
-    transformSize = x.osz
+    transformSize = x.output_size
     dataSize = x.sz
     if dataSize != transformSize
         # this is an rfft, since the dimension isn't preserved
