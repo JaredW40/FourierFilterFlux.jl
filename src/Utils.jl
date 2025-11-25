@@ -41,7 +41,7 @@ end
 # Only convert FFTW plans to CUFFT plans if CUDA is actually functional
 function CUDA.cu(P::FFTW.rFFTWPlan)
     if CUDA.functional()
-        return plan_rfft(CUDA.cu(zeros(real(eltype(P)), size(P))), P.region)
+        return plan_rfft(CUDA.cu(zeros(real(eltype(P)), P.input_size)), P.region)
     else
         return P   # fallback to CPU FFTW plan
     end
@@ -49,7 +49,7 @@ end
 
 function CUDA.cu(P::FFTW.cFFTWPlan)
     if CUDA.functional()
-        return plan_fft(CUDA.cu(zeros(eltype(P), size(P))), P.region)
+        return plan_fft(CUDA.cu(zeros(eltype(P), P.input_size)), P.region)
     else
         return P   # fallback to CPU FFTW plan
     end
@@ -58,7 +58,7 @@ CUDA.cu(P::CUDA.CUFFT.Plan) = P
 
 Adapt.adapt(::Type{Array{T}}, P::FFTW.FFTWPlan{T}) where {T} = P
 function Adapt.adapt(::Type{Array{T}}, P::FFTW.rFFTWPlan) where {T}
-    plan_rfft(zeros(real(T), size(P)), P.region)
+    plan_rfft(zeros(real(T), P.input_size), P.region)
 end
 Adapt.adapt(::Type{<:Array}, P::AbstractFFTs.Plan) = P
 Adapt.adapt(::Type{<:CuArray}, P::AbstractFFTs.Plan) = cu(P)
