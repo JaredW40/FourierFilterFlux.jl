@@ -22,7 +22,9 @@
         res = shears(init)
         @test abs.(minimalTransform(shears, init)) ≈ res
     end
-    
+
+    # Run tests on both CPU and GPU (if available)
+    # Begin with 2D test, then 1D later. 
     if CUDA.functional()
         @testset "ConvFFT 2D - GPU" begin
             originalSize = (10, 10, 1, 2)
@@ -40,8 +42,6 @@
             
             @test res_gpu isa CuArray
             @test size(res_gpu) == (10, 10, 5, 1, 2)
-            
-            # Now they should match because it's the same weights
             @test cpu(res_gpu) ≈ res_cpu rtol=1e-5
         end
     end
@@ -86,8 +86,6 @@
             
             @test res_gpu isa CuArray
             @test size(res_gpu) == (10, 5, 1, 2)
-            
-            # Now they should match
             @test cpu(res_gpu) ≈ res_cpu rtol=1e-5
         end
     end
