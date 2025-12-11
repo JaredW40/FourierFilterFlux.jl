@@ -38,16 +38,23 @@ function cu(cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A,V,PD,P,T,An}
         cft.analytic)
 end
 
-# TODO this is somewhat kludgy, not sure why cu was converting these back
-#function CUDA.cu(P::FFTW.rFFTWPlan)
-#    return plan_rfft(cu(zeros(real(eltype(P)), P.sz)), P.region)
-#end
-#CUDA.cu(P::CUFFT.rCuFFTPlan) = P
+# Only convert FFTW plans to CUFFT plans if CUDA is actually functional
+function CUDA.cu(P::FFTW.rFFTWPlan)
+    if CUDA.functional()
+        return plan_rfft(CUDA.cu(zeros(real(eltype(P)), P.sz)), P.region)
+    else
+        return P   # fallback to CPU FFTW plan
+    end
+end
 
-#function CUDA.cu(P::FFTW.cFFTWPlan)
-#    return plan_fft(cu(zeros(eltype(P), P.sz)), P.region)
-#end
-#CUDA.cu(P::CUFFT.cCuFFTPlan) = P
+function CUDA.cu(P::FFTW.cFFTWPlan)
+    if CUDA.functional()
+        return plan_fft(CUDA.cu(zeros(eltype(P), P.sz)), P.region)
+    else
+        return P   # fallback to CPU FFTW plan
+    end
+end
+CUDA.cu(P::CUDA.CUFFT.Plan) = P
 
 Adapt.adapt(::Type{Array{T}}, P::FFTW.FFTWPlan{T}) where {T} = P
 function Adapt.adapt(::Type{Array{T}}, P::FFTW.rFFTWPlan) where {T}
@@ -62,8 +69,8 @@ adapt(::Type{<:CuArray}, x::T) where {T<:CUDA.CUFFT.CuFFTPlan} = x
 # is actually converting
 function adapt(::Union{Type{<:Array},Flux.FluxCPUAdaptor},
         x::T) where {T<:CUDA.CUFFT.CuFFTPlan}
-    transformSize = x.osz
-    dataSize = x.sz
+    transformSize = x.output_size
+    dataSize = x.input_size
     if dataSize != transformSize
         # this is an rfft, since the dimension isn't preserved
         return plan_rfft(zeros(dataSize), x.region)

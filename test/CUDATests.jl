@@ -1,13 +1,13 @@
 if CUDA.functional()
     @testset "CUDA methods" begin
         w = ConvFFT((100,), nConvDims = 1)
-        @test cu(w.fftPlan) isa CUFFT.rCuFFTPlan # does cu work on the fft plans when applied directly?
+        @test cu(w.fftPlan) isa CUDA.CUFFT.CuFFTPlan # does cu work on the fft plans when applied directly?
         cw = cu(w)
         @test cw.weight isa NTuple{N,CuArray} where {N} # does cu work on the weights?
-        @test cw.fftPlan isa CUFFT.rCuFFTPlan # does cu work on the fftPlan?
+        @test cw.fftPlan isa CUDA.CUFFT.CuFFTPlan # does cu work on the fftPlan?
         cw1 = gpu(w)
         @test cw1.weight isa NTuple{N,CuArray} where {N} # does gpu work on the weights?
-        @test cw1.fftPlan isa CUFFT.rCuFFTPlan # does gpu work on the fftPlan?
+        @test cw1.fftPlan isa CUDA.CUFFT.CuFFTPlan # does gpu work on the fftPlan?
         w1 = cpu(cw)
         @test w1.weight isa NTuple{N,Array} where {N} # does cpu work on the weights?
         @test w1.fftPlan isa FFTW.rFFTWPlan # does cpu work on the fftPlan?

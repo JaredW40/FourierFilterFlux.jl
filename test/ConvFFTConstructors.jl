@@ -1,3 +1,4 @@
+using Zygote: gradient
 # TODO: add some checks for different boundary conditions
 # TODO: add checks for analytic wavelets
 # ConvFFT constructor tests
@@ -22,12 +23,13 @@
 
         shears = ConvFFT(weightMatrix, nothing, originalSize, abs,
             plan = true, boundary = Pad(padding), trainable = true)
-        @test Flux.params(shears).order[1] == shears.weight[1]
-        @test length(Flux.params(shears).order) == 1
+        trn = Flux.trainable(shears)
+        @test trn[1][1] == shears.weight[1]
+        @test length(trn) >= 1
 
         shears = ConvFFT(weightMatrix, nothing, originalSize, abs,
             boundary = Pad(padding), trainable = false)
-        @test isempty(Flux.params(shears))
+        @test isempty(Flux.trainable(shears))
 
         x = randn(21, 11, 1, 10)
         ∇ = gradient((x) -> shears(x)[1, 1, 1, 1, 3], x)
@@ -97,11 +99,11 @@
         if CUDA.functional()
             gpuVer = shears |> gpu
             @test gpuVer.weight[1] isa CuArray
-            @test gpuVer.fftPlan isa CUFFT.rCuFFTPlan
+            @test gpuVer.fftPlan isa CUDA.CUFFT.CuFFTPlan
             if !(gpuVer.weight[1] isa CuArray)
                 println("gpuVer.weight is of type $(typeof(gpuVer.weight))")
             end
-            if !(gpuVer.fftPlan isa CUFFT.rCuFFTPlan)
+            if !(gpuVer.fftPlan isa CUDA.CUFFT.CuFFTPlan)
                 println("gpuVer.fftPlan is of type $(typeof(gpuVer.fftPlan))")
             end
         end
@@ -147,11 +149,13 @@
             @test shears.σ == abs
             @test shears.bias == nothing
             @test shears.bc.padBy == (5,)
-            @test Flux.params(shears).order[1] == shears.weight[1]
+            trn = Flux.trainable(shears)
+            @test trn[1][1] == shears.weight[1] 
+            @test length(trn) >= 1
 
             shears = ConvFFT(weightMatrix, nothing, originalSize, abs,
                 plan = true, boundary = Pad(padding), trainable = false)
-            @test isempty(Flux.params(shears))
+            @test isempty(Flux.trainable(shears))
 
             x = randn(21, 1, 10)
             ∇ = gradient((x) -> shears(x)[1, 1, 1, 3], x)
@@ -165,7 +169,9 @@
             @test shears.σ == abs
             @test shears.bias == nothing
             @test typeof(shears.bc) <: Sym
-            @test Flux.params(shears).order[1] == shears.weight[1]
+            trn = Flux.trainable(shears)
+            @test trn[1][1] == shears.weight[1]
+            @test length(trn) >= 1
             x = randn(21, 1, 10)
             ∇ = gradient((x) -> shears(x)[1, 1, 1, 3], x)
             @test minimum(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
@@ -177,7 +183,9 @@
             @test shears.σ == abs
             @test shears.bias == nothing
             @test typeof(shears.bc) <: FourierFilterFlux.Periodic
-            @test Flux.params(shears).order[1] == shears.weight[1]
+            trn = Flux.trainable(shears)
+            @test trn[1][1] == shears.weight[1]
+            @test length(trn) >= 1
             x = randn(21, 1, 10)
             ∇ = gradient((x) -> shears(x)[1, 1, 1, 3], x)
             @test minimum(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
@@ -336,7 +344,7 @@
         if CUDA.functional()
             gpuVer = shears |> gpu
             @test gpuVer.weight[1] isa CuArray
-            @test gpuVer.fftPlan isa CUFFT.rCuFFTPlan
+            @test gpuVer.fftPlan isa CUDA.CUFFT.CuFFTPlan
         end
         # extra channel dimension
         originalSize = (20, 16, 1, 10)
