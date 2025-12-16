@@ -39,15 +39,15 @@ function cu(cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A,V,PD,P,T,An}
 end
 
 # TODO this is somewhat kludgy, not sure why cu was converting these back
-function CUDA.cu(P::FFTW.rFFTWPlan)
-    return plan_rfft(cu(zeros(real(eltype(P)), P.sz)), P.region)
-end
-CUDA.cu(P::CUFFT.rCuFFTPlan) = P
+#function CUDA.cu(P::FFTW.rFFTWPlan)
+#    return plan_rfft(cu(zeros(real(eltype(P)), P.sz)), P.region)
+#end
+#CUDA.cu(P::CUFFT.rCuFFTPlan) = P
 
-function CUDA.cu(P::FFTW.cFFTWPlan)
-    return plan_fft(cu(zeros(eltype(P), P.sz)), P.region)
-end
-CUDA.cu(P::CUFFT.cCuFFTPlan) = P
+#function CUDA.cu(P::FFTW.cFFTWPlan)
+#    return plan_fft(cu(zeros(eltype(P), P.sz)), P.region)
+#end
+#CUDA.cu(P::CUFFT.cCuFFTPlan) = P
 
 Adapt.adapt(::Type{Array{T}}, P::FFTW.FFTWPlan{T}) where {T} = P
 function Adapt.adapt(::Type{Array{T}}, P::FFTW.rFFTWPlan) where {T}
