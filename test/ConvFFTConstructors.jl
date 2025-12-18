@@ -30,7 +30,7 @@
         @test isempty(Flux.params(shears))
 
         x = randn(21, 11, 1, 10)
-        ∇ = gradient((x) -> shears(x)[1, 1, 1, 1, 3], x)
+        ∇ = Flux.gradient((x) -> shears(x)[1, 1, 1, 1, 3], x)
         @test minimum(∇[1][:, :, :, [1:2..., 4:10...]] .≈ 0)
 
         # check that the identity ConvFFT is, in fact, an identity
@@ -59,7 +59,7 @@
         nextLayer = FourierFilterFlux.internalConvFFT(x̂, shears.weight, usedInds,
             shears.fftPlan, shears.bias,
             shears.analytic)
-        ∇ = gradient((x̂) -> FourierFilterFlux.internalConvFFT(x̂,
+        ∇ = Flux.gradient((x̂) -> FourierFilterFlux.internalConvFFT(x̂,
                 shears.weight,
                 usedInds,
                 shears.fftPlan,
@@ -72,7 +72,7 @@
         @test minimum(abs.(diag(∇[1][:, :, 1, 1])) .≈ 2.0f0 / 31 / 21)
 
         ax = axes(x̂)[3:end-1]
-        ∇ = gradient((x̂) -> FourierFilterFlux.applyWeight(x̂, shears.weight[1], usedInds,
+        ∇ = Flux.gradient((x̂) -> FourierFilterFlux.applyWeight(x̂, shears.weight[1], usedInds,
                 shears.fftPlan,
                 shears.bias, FourierFilterFlux.NonAnalyticMatching())[1,
                 1,
@@ -81,7 +81,7 @@
                 1], x̂)
         @test minimum(abs.(diag(∇[1][:, :, 1, 1])) .≈ 2.0f0 / 31 / 21)
 
-        ∇ = gradient((x̂) -> (shears.fftPlan\(x̂.*shears.weight[1]))[1, 1, 1, 1], x̂)
+        ∇ = Flux.gradient((x̂) -> (shears.fftPlan\(x̂.*shears.weight[1]))[1, 1, 1, 1], x̂)
         @test minimum(abs.(diag(∇[1][:, :, 1, 1])) .≈ 1.0f0 / 31 * 2 / 21)
         sheared = shears(x)
         @test size(sheared) == (21, 11, 1, 1, 10)
@@ -154,7 +154,7 @@
             @test isempty(Flux.params(shears))
 
             x = randn(21, 1, 10)
-            ∇ = gradient((x) -> shears(x)[1, 1, 1, 3], x)
+            ∇ = Flux.gradient((x) -> shears(x)[1, 1, 1, 3], x)
             @test minimum(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
 
             # Sym test
@@ -167,7 +167,7 @@
             @test typeof(shears.bc) <: Sym
             @test Flux.params(shears).order[1] == shears.weight[1]
             x = randn(21, 1, 10)
-            ∇ = gradient((x) -> shears(x)[1, 1, 1, 3], x)
+            ∇ = Flux.gradient((x) -> shears(x)[1, 1, 1, 3], x)
             @test minimum(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
             @test minimum(abs.(∇[1][:, 1, 3])) > 0
             weightMatrix = randn(Float32, 21 >> 1 + 1, 1)
@@ -179,7 +179,7 @@
             @test typeof(shears.bc) <: FourierFilterFlux.Periodic
             @test Flux.params(shears).order[1] == shears.weight[1]
             x = randn(21, 1, 10)
-            ∇ = gradient((x) -> shears(x)[1, 1, 1, 3], x)
+            ∇ = Flux.gradient((x) -> shears(x)[1, 1, 1, 3], x)
             @test minimum(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
             @test minimum(abs.(∇[1][:, 1, 3])) > 0
         end
@@ -244,7 +244,7 @@
         fftPlan = plan_rfft(xbc, (1,))
         An = map(x -> FourierFilterFlux.NonAnalyticMatching(), (1:length(weight)...,))
         nextLayer = internalConvFFT(x̂, weight, usedInds, fftPlan, nothing, An)
-        ∇ = gradient((x̂) -> internalConvFFT(x̂, weight, usedInds, fftPlan, nothing, An)[1,
+        ∇ = Flux.gradient((x̂) -> internalConvFFT(x̂, weight, usedInds, fftPlan, nothing, An)[1,
                 1,
                 1,
                 1,
@@ -264,7 +264,7 @@
 
         # no bias, analytic (so complex valued)
         fftPlan = plan_fft(xbc, (1,))
-        ∇ = gradient((x̂) -> abs(applyWeight(x̂,
+        ∇ = Flux.gradient((x̂) -> abs(applyWeight(x̂,
                 weight[1],
                 usedInds,
                 fftPlan,
@@ -284,7 +284,7 @@
             nothing,
             FourierFilterFlux.RealWaveletRealSignal()))
         fftPlan = plan_fft(xbc, (1,))
-        ∇ = gradient((x̂) -> real(applyWeight(x̂,
+        ∇ = Flux.gradient((x̂) -> real(applyWeight(x̂,
                 weight[1],
                 usedInds,
                 fftPlan,
@@ -309,7 +309,7 @@
         nextLayer = FourierFilterFlux.internalConvFFT(x̂, shears.weight, usedInds,
             shears.fftPlan,
             shears.bias, shears.analytic)
-        ∇ = gradient((x̂) -> FourierFilterFlux.internalConvFFT(x̂,
+        ∇ = Flux.gradient((x̂) -> FourierFilterFlux.internalConvFFT(x̂,
                 shears.weight,
                 usedInds,
                 shears.fftPlan,
@@ -327,7 +327,7 @@
         # no bias, not analytic, complex valued, but still symmetric
         # biased (and one of the others, doesn't matter which)
 
-        ∇ = gradient((x̂) -> (shears.fftPlan\(x̂.*shears.weight[1]))[1, 1, 1, 1], x̂)
+        ∇ = Flux.gradient((x̂) -> (shears.fftPlan\(x̂.*shears.weight[1]))[1, 1, 1, 1], x̂)
         @test minimum(abs.(∇[1][:, :, 1, 1]) .≈ 1.0f0 / 31 * 2)
         sheared = shears(x)
         @test size(sheared) == (21, 1, 1, 10)
