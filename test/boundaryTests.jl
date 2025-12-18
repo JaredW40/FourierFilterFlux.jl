@@ -14,16 +14,16 @@
         input = ones(Float64, 10, 2)
         padd = pad(input, 5)
         @test size(padd) == (20, 2)
-        @test minimum(padd[1, :] .== 0.0)
-        @test minimum(padd[6, :] .== 1.0)
+        @test add(padd[1, :] .== 0.0)
+        @test add(padd[6, :] .== 1.0)
         @test eltype(padd) == eltype(input)
 
         # two meta dims, different type
         input = ones(ComplexF64, 10, 5, 3)
         padd = pad(input, 5)
         @test size(padd) == (20, 5, 3)
-        @test minimum(padd[1, :, :] .== 0.0)
-        @test minimum(padd[6, :, :] .== 1.0)
+        @test add(padd[1, :, :] .== 0.0)
+        @test add(padd[6, :, :] .== 1.0)
         @test eltype(padd) == eltype(input)
 
         # test the gradient is just an indicator with the right offset
@@ -46,16 +46,16 @@
         input = ones(Float64, 10, 10, 2)
         padd = pad(input, (5, 5))
         @test size(padd) == (20, 20, 2)
-        @test minimum(padd[1, 1, :] .== 0.0)
-        @test minimum(padd[6, 6, :] .== 1.0)
+        @test add(padd[1, 1, :] .== 0.0)
+        @test add(padd[6, 6, :] .== 1.0)
         @test eltype(padd) == eltype(input)
 
         # two meta dims, different type
         input = ones(ComplexF64, 10, 10, 5, 3)
         padd = pad(input, (5, 5))
         @test size(padd) == (20, 20, 5, 3)
-        @test minimum(padd[1, 1, :, :] .== 0.0)
-        @test minimum(padd[6, 6, :, :] .== 1.0)
+        @test add(padd[1, 1, :, :] .== 0.0)
+        @test add(padd[6, 6, :, :] .== 1.0)
         @test eltype(padd) == eltype(input)
 
         # test the gradient is just an indicator with the right offset
@@ -89,7 +89,7 @@ end
     @test size(xbc) == (20, 20, 10)
     @test usedInds == (1:10, 1:10)
 
-    eSz, nBound = FourierFilterFlux.effectiveSize((10, 10), Pad((-1, -1)))
+    eSz, nBound = FourierFilterFlux.effectiveSize((10, 10), Pad(-1, -1))
     @test eSz == (16, 16)
     @test nBound == Pad(3, 3)
 end
