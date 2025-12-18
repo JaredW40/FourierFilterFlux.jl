@@ -1,6 +1,7 @@
 # TODO: add some checks for different boundary conditions
 # TODO: add checks for analytic wavelets
 # ConvFFT constructor tests
+using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
 @testset "ConvFFT constructors" begin
     @testset "Utils" begin
         explicit = [1 0 0; 0 1 0; 0 0 1; zeros(2, 3)]
@@ -32,7 +33,7 @@
 
         x = randn(21, 11, 1, 10)
         ∇ = Flux.gradient((x) -> shears(x)[1, 1, 1, 1, 3], x)
-        @test minimum(∇[1][:, :, :, [1:2..., 4:10...]] .≈ 0)
+        @test all(∇[1][:, :, :, [1:2..., 4:10...]] .≈ 0)
 
         # check that the identity ConvFFT is, in fact, an identity
         weightMatrix = ones(Float32, (21 + 10) >> 1 + 1, 11 + 10, 1)
@@ -70,7 +71,7 @@
                 1,
                 1],
             x̂)
-        @test minimum(abs.(diag(∇[1][:, :, 1, 1])) .≈ 2.0f0 / 31 / 21)
+        @test all(abs.(diag(∇[1][:, :, 1, 1])) .≈ 2.0f0 / 31 / 21)
 
         ax = axes(x̂)[3:end-1]
         ∇ = Flux.gradient((x̂) -> FourierFilterFlux.applyWeight(x̂, shears.weight[1], usedInds,
@@ -80,10 +81,10 @@
                 1,
                 1,
                 1], x̂)
-        @test minimum(abs.(diag(∇[1][:, :, 1, 1])) .≈ 2.0f0 / 31 / 21)
+        @test all(abs.(diag(∇[1][:, :, 1, 1])) .≈ 2.0f0 / 31 / 21)
 
         ∇ = Flux.gradient((x̂) -> (shears.fftPlan\(x̂.*shears.weight[1]))[1, 1, 1, 1], x̂)
-        @test minimum(abs.(diag(∇[1][:, :, 1, 1])) .≈ 1.0f0 / 31 * 2 / 21)
+        @test all(abs.(diag(∇[1][:, :, 1, 1])) .≈ 1.0f0 / 31 * 2 / 21)
         sheared = shears(x)
         @test size(sheared) == (21, 11, 1, 1, 10)
 
@@ -158,7 +159,7 @@
 
             x = randn(21, 1, 10)
             ∇ = Flux.gradient((x) -> shears(x)[1, 1, 1, 3], x)
-            @test minimum(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
+            @test all(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
 
             # Sym test
             weightMatrix = randn(Float32, (21 + 1), 1)
@@ -173,8 +174,8 @@
             @test length(trn) >= 1
             x = randn(21, 1, 10)
             ∇ = Flux.gradient((x) -> shears(x)[1, 1, 1, 3], x)
-            @test minimum(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
-            @test minimum(abs.(∇[1][:, 1, 3])) > 0
+            @test all(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
+            @test all(abs.(∇[1][:, 1, 3]) .> 0)
             weightMatrix = randn(Float32, 21 >> 1 + 1, 1)
             shears = ConvFFT(weightMatrix, nothing, originalSize, abs,
                 plan = true, boundary = FourierFilterFlux.Periodic())
@@ -187,8 +188,8 @@
             @test length(trn) >= 1
             x = randn(21, 1, 10)
             ∇ = Flux.gradient((x) -> shears(x)[1, 1, 1, 3], x)
-            @test minimum(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
-            @test minimum(abs.(∇[1][:, 1, 3])) > 0
+            @test all(∇[1][:, :, [1:2..., 4:10...]] .≈ 0)
+            @test all(abs.(∇[1][:, 1, 3]) .> 0)
         end
 
         # check that the identity ConvFFT is, in fact, an identity
@@ -242,7 +243,6 @@
         end
 
 
-        using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
         weight = (2 .* ones(Complex{Float32}, (21 + 10) >> 1 + 1),)
         bc = Pad(5)
         x = randn(Float32, 21, 1, 10)
@@ -257,7 +257,7 @@
                 1,
                 1],
             x̂)
-        y, ∂ = pullback((x̂) -> internalConvFFT(x̂, weight, usedInds, fftPlan, nothing, An)[1,
+        y, ∂ = Zygote.pullback((x̂) -> internalConvFFT(x̂, weight, usedInds, fftPlan, nothing, An)[1,
                 1,
                 1,
                 1,
@@ -266,7 +266,7 @@
         ∂(y)
         ∂(y) # repeated calls to the derivative were causing errors while argWrapper
         # was in use
-        @test minimum(abs.(∇[1][:, 1, 1]) .≈ 2.0f0 / 31)
+        @test all(abs.(∇[1][:, 1, 1]) .≈ 2.0f0 / 31)
         # no bias, not analytic and real valued output
 
         # no bias, analytic (so complex valued)
@@ -281,7 +281,7 @@
                 1,
                 1]),
             x̂)
-        @test minimum(abs.(∇[1][:, 1, 1]) .≈ 2.0f0 / 31)
+        @test all(abs.(∇[1][:, 1, 1]) .≈ 2.0f0 / 31)
 
         # no bias, not analytic, complex valued, but still symmetric
         real(applyWeight(x̂,
@@ -301,7 +301,7 @@
                 1,
                 1]),
             x̂)
-        @test minimum(abs.(∇[1][2:end, 1, 1]) .≈ 2 * 2.0f0 / 31)
+        @test all(abs.(∇[1][2:end, 1, 1]) .≈ 2 * 2.0f0 / 31)
         @test abs(∇[1][1, 1, 1]) ≈ 2.0f0 / 31
 
         # internal methods tests
@@ -326,7 +326,7 @@
                 1,
                 1],
             x̂)
-        @test minimum(abs.(∇[1][:, 1, 1]) .≈ 2.0f0 / 31)
+        @test all(abs.(∇[1][:, 1, 1]) .≈ 2.0f0 / 31)
         #
 
         # no bias, not analytic and real valued output
@@ -335,7 +335,7 @@
         # biased (and one of the others, doesn't matter which)
 
         ∇ = Flux.gradient((x̂) -> (shears.fftPlan\(x̂.*shears.weight[1]))[1, 1, 1, 1], x̂)
-        @test minimum(abs.(∇[1][:, :, 1, 1]) .≈ 1.0f0 / 31 * 2)
+        @test all(abs.(∇[1][:, :, 1, 1]) .≈ 1.0f0 / 31 * 2)
         sheared = shears(x)
         @test size(sheared) == (21, 1, 1, 10)
 
