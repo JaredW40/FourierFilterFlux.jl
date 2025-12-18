@@ -16,15 +16,15 @@ if CUDA.functional()
         @test cw(cx) isa CuArray
         @test cw(cx) ≈ cu(w(x)) # CUDA and cpu version get the same result approximately
         cw(cx)
-        ∇cu = gradient(t -> sum(cw(t)), cx)[1]
-        ∇ = gradient(t -> sum(w(t)), x)[1]
+        ∇cu = Flux.gradient(t -> sum(cw(t)), cx)[1]
+        ∇ = Flux.gradient(t -> sum(w(t)), x)[1]
         @test ∇ ≈ cpu(∇cu)
         w1 = waveletLayer((100, 1, 1))
         cw1 = cu(w1)
         @test cw1(cx) ≈ cu(w1(x))
 
-        CUDA.@allowscalar ∇cu = gradient(t -> abs(cw1(t)[1]), cx)[1]
-        CUDA.@allowscalar ∇ = gradient(t -> abs(w1(t)[1]), x)[1]
+        CUDA.@allowscalar ∇cu = Flux.gradient(t -> abs(cw1(t)[1]), cx)[1]
+        CUDA.@allowscalar ∇ = Flux.gradient(t -> abs(w1(t)[1]), x)[1]
         @test ∇ ≈ cpu(∇cu)
     end
 end
