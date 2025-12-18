@@ -89,7 +89,7 @@ end
     @test size(xbc) == (20, 20, 10)
     @test usedInds == (1:10, 1:10)
 
-    eSz, nBound = FourierFilterFlux.effectiveSize((10, 10), Pad(-1, -1))
+    eSz, nBound = FourierFilterFlux.effectiveSize((10, 10), Pad((-1, -1)))
     @test eSz == (16, 16)
     @test nBound == Pad(3, 3)
 end
