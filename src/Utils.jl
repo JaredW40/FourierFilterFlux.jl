@@ -1,7 +1,7 @@
 import NNlib.relu
 # just a little bit of type piracy used internally TODO maybe don't...
 relu(x::C) where {C<:Complex} = real(x) > 0 ? x : C(0)
-
+import CUDA: CuArray
 # ways to convert between gpu and cpu
 import Adapt.adapt
 function adapt(to, cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A,V,PD,P,T,An}
