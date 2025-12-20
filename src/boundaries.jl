@@ -11,7 +11,7 @@ end
 
 N gives the number of dimensions of convolution, while `x` gives the specific amount to pad in each dimension (done on both sides). If the values in `x` are negative, then the support of the filters will be determined automataically
 """
-Pad(x::Vararg{<:Integer,N}) where {N} = Pad{N}(x)
+Pad(x::Vararg{Integer,N}) where {N} = Pad{N}(x)
 import Base.ndims
 ndims(p::Pad{N}) where {N} = N
 
