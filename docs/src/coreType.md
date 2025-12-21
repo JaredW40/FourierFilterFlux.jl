@@ -135,7 +135,7 @@ julia> for x in genEx(100)
        end
 
 julia> sum(norm.(map(-, targetConv.weight, filt.weight)) .^ 2) / sum(norm.(targetConv.weight) .^ 2) # the relative error
-0.8206548516626784
+0.8207499248183181
 
 ```
 
