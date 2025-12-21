@@ -4,14 +4,11 @@ using Zygote, Flux, Adapt, LinearAlgebra
 using AbstractFFTs, FFTW # TODO: check the license on FFTW and such
 using ContinuousWavelets
 using RecipesBase
+using CUDA
 
 const use_cuda = Ref(false)
-
-function __init__()
-    @eval using CUDA
-    if CUDA.functional()
-        use_cuda[] = true
-    end
+if CUDA.functional()
+    use_cuda[] = true
 end
 
 import Adapt: adapt
