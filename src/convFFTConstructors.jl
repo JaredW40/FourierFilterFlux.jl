@@ -78,7 +78,7 @@ function waveletLayer(inputSize::Union{T,NTuple{N,T}};
             averagingStyle = RealWaveletComplexSignal
         end
         An = map(ii -> ((ii in An) ? averagingStyle() :
-                        AnalyticWavelet()), (1:size(wavelets, 2)[end]...,))
+                    AnalyticWavelet()), 1:size(wavelets, 2))
     end
     if bias
         bias = dType.(init(inputSize[2:end-1]..., size(wavelets, 2)))

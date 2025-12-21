@@ -14,21 +14,21 @@
         input = ones(Float64, 10, 2)
         padd = pad(input, 5)
         @test size(padd) == (20, 2)
-        @test minimum(padd[1, :] .== 0.0)
-        @test minimum(padd[6, :] .== 1.0)
+        @test all(padd[1, :] .== 0.0)
+        @test all(padd[6, :] .== 1.0)
         @test eltype(padd) == eltype(input)
 
         # two meta dims, different type
         input = ones(ComplexF64, 10, 5, 3)
         padd = pad(input, 5)
         @test size(padd) == (20, 5, 3)
-        @test minimum(padd[1, :, :] .== 0.0)
-        @test minimum(padd[6, :, :] .== 1.0)
+        @test all(padd[1, :, :] .== 0.0)
+        @test all(padd[6, :, :] .== 1.0)
         @test eltype(padd) == eltype(input)
 
         # test the gradient is just an indicator with the right offset
         i = 6
-        grad = gradient(x -> pad(x, 5)[i, 1, 1], randn(5, 5, 2))[1]
+        grad = Flux.gradient(x -> pad(x, 5)[i, 1, 1], randn(5, 5, 2))[1]
         @test size(grad) == (5, 5, 2)
         @test grad[1, 1, 1] == 1
     end
@@ -46,22 +46,22 @@
         input = ones(Float64, 10, 10, 2)
         padd = pad(input, (5, 5))
         @test size(padd) == (20, 20, 2)
-        @test minimum(padd[1, 1, :] .== 0.0)
-        @test minimum(padd[6, 6, :] .== 1.0)
+        @test all(padd[1, 1, :] .== 0.0)
+        @test all(padd[6, 6, :] .== 1.0)
         @test eltype(padd) == eltype(input)
 
         # two meta dims, different type
         input = ones(ComplexF64, 10, 10, 5, 3)
         padd = pad(input, (5, 5))
         @test size(padd) == (20, 20, 5, 3)
-        @test minimum(padd[1, 1, :, :] .== 0.0)
-        @test minimum(padd[6, 6, :, :] .== 1.0)
+        @test all(padd[1, 1, :, :] .== 0.0)
+        @test all(padd[6, 6, :, :] .== 1.0)
         @test eltype(padd) == eltype(input)
 
         # test the gradient is just an indicator with the right offset
         i = 6
         j = 7
-        grad = gradient(x -> pad(x, (5, 6))[i, j, 1, 1], randn(5, 5, 5, 2))[1]
+        grad = Flux.gradient(x -> pad(x, (5, 6))[i, j, 1, 1], randn(5, 5, 5, 2))[1]
         @test size(grad) == (5, 5, 5, 2)
         @test grad[1, 1, 1, 1] == 1
     end

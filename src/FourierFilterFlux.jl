@@ -1,13 +1,15 @@
 module FourierFilterFlux
 using Reexport
-# @reexport using CUDA
-using CUDA
 using Zygote, Flux, Adapt, LinearAlgebra
 using AbstractFFTs, FFTW # TODO: check the license on FFTW and such
 using ContinuousWavelets
 using RecipesBase
+using CUDA
 
 const use_cuda = Ref(false)
+if CUDA.functional()
+    use_cuda[] = true
+end
 
 import Adapt: adapt
 export pad, originalDomain, formatJLD, getBatchSize
