@@ -14,7 +14,7 @@ julia> w[55:60,2] = randn(6);
 julia> ŵ = rfft(w, 1);
 
 julia> W = ConvFFT(ŵ,nothing,(128,1,2))
-ConvFFT[input=((128,), nfilters = 2, σ=identity, bc=Periodic()]
+ConvFFT[input=((128,), nfilters = 2, σ=identity, bc=Periodic()]  # 130 parameters
 
 ```
 
@@ -72,8 +72,8 @@ address this, e.g. `Pad(6)`
 ```jldoctest 1DconvEx
 julia> W = ConvFFT(ŵ,nothing,(128,1,2),boundary= FourierFilterFlux.Pad(6))
 ┌ Warning: You didn't hand me a set of filters constructed with the boundary in mind. I'm going to adjust them to fit, this may not be what you intended
-└ @ FourierFilterFlux ~/allHail/projects/FourierFilterFlux/src/FourierFilterFlux.jl:148
-ConvFFT[input=((128,), nfilters = 2, σ=identity, bc=Pad(6,)]
+└ @ FourierFilterFlux ~/work/FourierFilterFlux.jl/FourierFilterFlux.jl/src/FourierFilterFlux.jl:180
+ConvFFT[input=((128,), nfilters = 2, σ=identity, bc=Pad(6,)]  # 142 parameters
 
 julia> r =W(x); size(r)
 (128, 2, 1, 2)
@@ -93,7 +93,7 @@ do that as well:
 julia> ex2Dsize = (127, 352, 1, 10);
 
 julia> filt = ConvFFT(ex2Dsize, 3, relu, trainable=true,bias=false)
-ConvFFT[input=((127, 352), nfilters = 3, σ=relu, bc=Periodic()]
+ConvFFT[input=((127, 352), nfilters = 3, σ=relu, bc=Periodic()]  # 67_584 parameters
 
 ```
 
@@ -118,20 +118,24 @@ julia> fitThis = zeros(64,352,3); fitThis[1:3,(176-3:176+3),1] .= 1;
 julia> fitThis[1:15,(176-15:176+15),2] .= 1; fitThis[1:32,(176-44:176+44),3] .= 1;
 
 julia> targetConv = ConvFFT(fitThis, nothing, (127,352,1,10))
-ConvFFT[input=((127, 352), nfilters = 3, σ=identity, bc=Periodic()]
+ConvFFT[input=((127, 352), nfilters = 3, σ=identity, bc=Periodic()]  # 67_584 parameters
 
 julia> sum(norm.(map(-, targetConv.weight, filt.weight)) .^ 2) / sum(norm.(targetConv.weight) .^ 2) # the relative error
-1.0038243395792357
+1.0039214694920346
 
-julia> loss(x,y) = norm(filt(x) - targetConv(x))
+julia> loss(m, x) = norm(m(x) - targetConv(x))
 loss (generic function with 1 method)
 
-julia> genEx(n) = [(cpu(randn(ex2Dsize)), true) for i=1:n];
+julia> genEx(n) = [cpu(randn(ex2Dsize)) for i=1:n];
 
-julia> Flux.train!(loss, Flux.params(filt), genEx(100), ADAM()) # train for 100 samples
+julia> opt = Flux.setup(Adam(), filt);
+
+julia> for x in genEx(100)
+           Flux.train!(loss, filt, [(x,)], opt)
+       end
 
 julia> sum(norm.(map(-, targetConv.weight, filt.weight)) .^ 2) / sum(norm.(targetConv.weight) .^ 2) # the relative error
-0.8206548516626784
+0.8207499248183181
 
 ```
 
@@ -140,10 +144,13 @@ using FourierFilterFlux, Flux, LinearAlgebra # hide
 fitThis = zeros(64,352,3); fitThis[1:3,(176-3:176+3),1] .= 1; # hide
 fitThis[1:15,(176-15:176+15),2] .= 1; fitThis[1:32,(176-44:176+44),3] .= 1; # hide
 targetConv = ConvFFT(fitThis, nothing, (127,352,1,10)) # hide
-loss(x,y) = norm(filt(x) - targetConv(x)) # hide
-genEx(n) = [(cpu(randn(ex2Dsize)), true) for i=1:n]; # hide
-Flux.train!(loss, Flux.params(filt), genEx(100), ADAM()) # hide
-loss(randn(ex2Dsize), nothing) # hide
+loss(m, x) = norm(m(x) - targetConv(x)) # hide
+genEx(n) = [cpu(randn(ex2Dsize)) for i=1:n]; # hide
+opt = Flux.setup(Adam(), filt); # hide
+for x in genEx(100) # hide
+    Flux.train!(loss, filt, [(x,)], opt) # hide
+end # hide
+loss(filt, randn(ex2Dsize)) # hide
 plot(heatmap(filt,vis=1), heatmap(filt,vis=2), heatmap(filt,vis=3),
 	heatmap(targetConv,vis=1), heatmap(targetConv,vis=2),
 	heatmap(targetConv,vis=3))
