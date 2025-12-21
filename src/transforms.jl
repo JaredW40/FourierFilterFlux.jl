@@ -1,5 +1,5 @@
 # TODO: version that doesn't have an fft built in
-
+import CUDA: CuArray
 function (shears::ConvFFT)(x)
     if typeof(shears.weight) <: CuArray && !(typeof(x) <: CuArray)
         error("don't try to apply a gpu transform to a non-CuArray")

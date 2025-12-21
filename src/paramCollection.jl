@@ -1,4 +1,4 @@
-Flux.@functor ConvFFT
+Flux.@layer ConvFFT
 
 function Flux.trainable(CFT::ConvFFT{A,B,C,D,E,F,G,true}) where {A,B,C,D,E,F,G}
     (CFT.weight, CFT.bias)
