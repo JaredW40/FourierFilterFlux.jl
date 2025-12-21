@@ -5,6 +5,11 @@ using AbstractFFTs, FFTW # TODO: check the license on FFTW and such
 using ContinuousWavelets
 using RecipesBase
 using CUDA
+using Functors
+
+Functors.@leaf FFTW.rFFTWPlan
+Functors.@leaf FFTW.cFFTWPlan  
+Functors.@leaf FFTW.Plan
 
 const use_cuda = Ref(false)
 if CUDA.functional()
