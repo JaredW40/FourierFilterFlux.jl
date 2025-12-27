@@ -16,4 +16,4 @@ makedocs(sitename = "FourierFilterFlux.jl",
         ],
         "Built-in Constructors" => "constructors.md"
     ])
-deploydocs(repo = "github.com/dsweber2/FourierFilterFlux.jl.git")
+deploydocs(repo = "github.com/BoundaryValueProblems/FourierFilterFlux.jl.git")
