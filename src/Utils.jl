@@ -41,7 +41,7 @@ end
 # Only convert FFTW plans to CUFFT plans if CUDA is actually functional
 function CUDA.cu(P::FFTW.rFFTWPlan)
     if CUDA.functional()
-        return plan_rfft(CUDA.cu(zeros(real(eltype(P)), P.sz)), P.region)
+        return plan_rfft(CUDA.cu(zeros(real(eltype(P)), P.input_size)), P.region)
     else
         return P   # fallback to CPU FFTW plan
     end
@@ -49,7 +49,7 @@ end
 
 function CUDA.cu(P::FFTW.cFFTWPlan)
     if CUDA.functional()
-        return plan_fft(CUDA.cu(zeros(eltype(P), P.sz)), P.region)
+        return plan_fft(CUDA.cu(zeros(eltype(P), P.input_size)), P.region)
     else
         return P   # fallback to CPU FFTW plan
     end
@@ -58,7 +58,7 @@ CUDA.cu(P::CUDA.CUFFT.Plan) = P
 
 Adapt.adapt(::Type{Array{T}}, P::FFTW.FFTWPlan{T}) where {T} = P
 function Adapt.adapt(::Type{Array{T}}, P::FFTW.rFFTWPlan) where {T}
-    plan_rfft(zeros(real(T), P.sz), P.region)
+    plan_rfft(zeros(real(T), P.input_size), P.region)
 end
 Adapt.adapt(::Type{<:Array}, P::AbstractFFTs.Plan) = P
 Adapt.adapt(::Type{<:CuArray}, P::AbstractFFTs.Plan) = cu(P)
@@ -160,7 +160,7 @@ function getBatchSize(c::C) where {C<:ConvFFT}
     if typeof(c.fftPlan) <: Tuple
         return c.fftPlan[2][end]
     else
-        return c.fftPlan.sz[end]
+        return c.fftPlan.input_size[end]
     end
 end
 
@@ -168,7 +168,7 @@ function getBatchSize(c::ConvFFT{D,OT,A,B,C,PD,P}) where {D,OT,A,B,C,PD,P<:Tuple
     if typeof(c.fftPlan[1]) <: Tuple
         return c.fftPlan[1][2][end]
     else
-        return c.fftPlan[1].sz[end]
+        return c.fftPlan[1].input_size[end]
     end
 end
 
@@ -278,7 +278,7 @@ function size(l::C) where {C<:ConvFFT}
     if typeof(l.fftPlan) <: Tuple
         sz = l.fftPlan[2]
     else
-        sz = l.fftPlan.sz
+        sz = l.fftPlan.input_size
     end
     signalSize = originalSize(sz[1:ndims(l.weight[1])], l.bc)
     return (signalSize..., sz[(ndims(l.weight[1])+1):end]...)
@@ -288,7 +288,7 @@ function size(l::ConvFFT{D,OT,A,B,C,PD,P}) where {D,OT,A,B,C,PD,P<:Tuple}
     if typeof(l.fftPlan[1]) <: Tuple
         sz = l.fftPlan[1][2]
     else
-        sz = l.fftPlan[1].sz
+        sz = l.fftPlan[1].input_size
     end
     signalSize = originalSize(sz[1:ndims(l.weight[1])], l.bc)
     return (signalSize..., sz[(ndims(l.weight[1])+1):end]...)
