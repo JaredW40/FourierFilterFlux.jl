@@ -160,7 +160,7 @@ function getBatchSize(c::C) where {C<:ConvFFT}
     if typeof(c.fftPlan) <: Tuple
         return c.fftPlan[2][end]
     else
-        return c.fftPlan.input_size[end]
+        return (typeof(c.fftPlan) <: CUDA.CUFFT.CuFFTPlan ? c.fftPlan.input_size : c.fftPlan.sz)[end]
     end
 end
 
@@ -168,7 +168,7 @@ function getBatchSize(c::ConvFFT{D,OT,A,B,C,PD,P}) where {D,OT,A,B,C,PD,P<:Tuple
     if typeof(c.fftPlan[1]) <: Tuple
         return c.fftPlan[1][2][end]
     else
-        return c.fftPlan[1].input_size[end]
+        return (typeof(c.fftPlan[1]) <: CUDA.CUFFT.CuFFTPlan ? c.fftPlan[1].input_size : c.fftPlan[1].sz)[end]
     end
 end
 
@@ -278,7 +278,7 @@ function size(l::C) where {C<:ConvFFT}
     if typeof(l.fftPlan) <: Tuple
         sz = l.fftPlan[2]
     else
-        sz = l.fftPlan.input_size
+        sz = typeof(l.fftPlan) <: CUDA.CUFFT.CuFFTPlan ? l.fftPlan.input_size : l.fftPlan.sz
     end
     signalSize = originalSize(sz[1:ndims(l.weight[1])], l.bc)
     return (signalSize..., sz[(ndims(l.weight[1])+1):end]...)
@@ -288,7 +288,7 @@ function size(l::ConvFFT{D,OT,A,B,C,PD,P}) where {D,OT,A,B,C,PD,P<:Tuple}
     if typeof(l.fftPlan[1]) <: Tuple
         sz = l.fftPlan[1][2]
     else
-        sz = l.fftPlan[1].input_size
+        sz = typeof(l.fftPlan[1]) <: CUDA.CUFFT.CuFFTPlan ? l.fftPlan[1].input_size : l.fftPlan[1].sz
     end
     signalSize = originalSize(sz[1:ndims(l.weight[1])], l.bc)
     return (signalSize..., sz[(ndims(l.weight[1])+1):end]...)
