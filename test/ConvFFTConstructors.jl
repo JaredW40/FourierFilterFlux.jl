@@ -71,7 +71,7 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
                 1,
                 1],
             x̂)
-        @test all(abs.(diag(∇[1][:, :, 1, 1])) .≈ 2.0f0 / 31 / 21  rtol=1e-3)
+        @test all(isapprox.(abs.(diag(∇[1][:, :, 1, 1])), 2.0f0 / 31 / 21, rtol=1e-3))
 
         ax = axes(x̂)[3:end-1]
         ∇ = Flux.gradient((x̂) -> FourierFilterFlux.applyWeight(x̂, shears.weight[1], usedInds,
@@ -81,7 +81,7 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
                 1,
                 1,
                 1], x̂)
-        @test all(abs.(diag(∇[1][:, :, 1, 1])) .≈ 2.0f0 / 31 / 21  rtol=1e-3)
+        @test all(isapprox.(abs.(diag(∇[1][:, :, 1, 1])), 2.0f0 / 31 / 21, rtol=1e-3))
 
         ∇ = Flux.gradient((x̂) -> (shears.fftPlan\(x̂.*shears.weight[1]))[1, 1, 1, 1], x̂)
         @test all(abs.(diag(∇[1][:, :, 1, 1])) .≈ 1.0f0 / 31 * 2 / 21)
@@ -268,7 +268,7 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
         ∂(y)
         ∂(y) # repeated calls to the derivative were causing errors while argWrapper
         # was in use
-        @test all(abs.(∇[1][:, 1, 1]) .≈ 2.0f0 / 31  rtol=1e-3)
+        @test all(isapprox.(abs.(∇[1][:, 1, 1]), 2.0f0 / 31, rtol=1e-3))
         # no bias, not analytic and real valued output
 
         # no bias, analytic (so complex valued)
@@ -328,7 +328,7 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
                 1,
                 1],
             x̂)
-        @test all(abs.(∇[1][:, 1, 1]) .≈ 2.0f0 / 31  rtol=1e-3)
+        @test all(isapprox.(abs.(∇[1][:, 1, 1]), 2.0f0 / 31, rtol=1e-3))
         #
 
         # no bias, not analytic and real valued output
@@ -337,7 +337,7 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
         # biased (and one of the others, doesn't matter which)
 
         ∇ = Flux.gradient((x̂) -> (shears.fftPlan\(x̂.*shears.weight[1]))[1, 1, 1, 1], x̂)
-        @test all(abs.(∇[1][:, :, 1, 1]) .≈ 1.0f0 / 31 * 2  rtol=1e-3)
+        @test all(isapprox.(abs.(∇[1][:, :, 1, 1]), 1.0f0 / 31 * 2, rtol=1e-3))
         sheared = shears(x)
         @test size(sheared) == (21, 1, 1, 10)
 
