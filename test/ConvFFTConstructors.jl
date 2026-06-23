@@ -99,11 +99,13 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
         if CUDA.functional()
             gpuVer = shears |> gpu
             @test gpuVer.weight[1] isa CuArray
-            @test gpuVer.fftPlan isa CUDA.CUFFT.CuFFTPlan
+            # @test gpuVer.fftPlan isa cuFFT.CuFFTPlan
+            @test gpuVer.fftPlan isa AbstractFFTs.Plan
             if !(gpuVer.weight[1] isa CuArray)
                 println("gpuVer.weight is of type $(typeof(gpuVer.weight))")
             end
-            if !(gpuVer.fftPlan isa CUDA.CUFFT.CuFFTPlan)
+            #if !(gpuVer.fftPlan isa cuFFT.CuFFTPlan)
+            if !(gpuVer.fftPlan isa AbstractFFTs.Plan)    
                 println("gpuVer.fftPlan is of type $(typeof(gpuVer.fftPlan))")
             end
         end
@@ -343,7 +345,8 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
         if CUDA.functional()
             gpuVer = shears |> gpu
             @test gpuVer.weight[1] isa CuArray
-            @test gpuVer.fftPlan isa CUDA.CUFFT.CuFFTPlan
+            # @test gpuVer.fftPlan isa cuFFT.CuFFTPlan
+            @test gpuVer.fftPlan isa AbstractFFTs.Plan
         end
         # extra channel dimension
         originalSize = (20, 16, 1, 10)

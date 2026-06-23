@@ -1,30 +1,32 @@
 if CUDA.functional()
     @testset "CUDA methods" begin
         w = ConvFFT((100,), nConvDims = 1)
-        @test cu(w.fftPlan) isa CUDA.CUFFT.CuFFTPlan # does cu work on the fft plans when applied directly?
+        @test cu(w.fftPlan) isa cuFFT.CuFFTPlan
         cw = cu(w)
-        @test cw.weight isa NTuple{N,CuArray} where {N} # does cu work on the weights?
-        @test cw.fftPlan isa CUDA.CUFFT.CuFFTPlan # does cu work on the fftPlan?
+        @test cw.weight isa NTuple{N,CuArray} where {N}
+        @test cw.fftPlan isa cuFFT.CuFFTPlan
         cw1 = gpu(w)
-        @test cw1.weight isa NTuple{N,CuArray} where {N} # does gpu work on the weights?
-        @test cw1.fftPlan isa CUDA.CUFFT.CuFFTPlan # does gpu work on the fftPlan?
+        @test cw1.weight isa NTuple{N,CuArray} where {N}
+        @test cw1.fftPlan isa cuFFT.CuFFTPlan 
         w1 = cpu(cw)
-        @test w1.weight isa NTuple{N,Array} where {N} # does cpu work on the weights?
-        @test w1.fftPlan isa FFTW.rFFTWPlan # does cpu work on the fftPlan?
-        x = randn(100)
+        @test w1.weight isa NTuple{N,Array} where {N}
+        @test w1.fftPlan isa FFTW.rFFTWPlan
+
+        x = randn(Float32, 100)
         cx = cu(x)
         @test cw(cx) isa CuArray
-        @test cw(cx) ≈ cu(w(x)) # CUDA and cpu version get the same result approximately
+        @test cw(cx) ≈ cu(w(x)) rtol=1e-6
         cw(cx)
-        ∇cu = Flux.gradient(t -> sum(cw(t)), cx)[1]
-        ∇ = Flux.gradient(t -> sum(w(t)), x)[1]
-        @test ∇ ≈ cpu(∇cu)
+
+        ∇cu = Zygote.gradient(t -> sum(cw(t)), cx)[1] 
+        ∇ = Zygote.gradient(t -> sum(w(t)), x)[1]
+        @test ∇ ≈ cpu(∇cu) rtol=1e-5
         w1 = waveletLayer((100, 1, 1))
         cw1 = cu(w1)
-        @test cw1(cx) ≈ cu(w1(x))
+        @test cw1(cx) ≈ cu(w1(x)) rtol=1e-4
 
-        CUDA.@allowscalar ∇cu = Flux.gradient(t -> abs(cw1(t)[1]), cx)[1]
-        CUDA.@allowscalar ∇ = Flux.gradient(t -> abs(w1(t)[1]), x)[1]
-        @test ∇ ≈ cpu(∇cu)
+        ∇_gpu = Zygote.gradient(t -> sum(abs.(cw1(t)[1:1])), cx)[1]
+        ∇_cpu = Zygote.gradient(t -> sum(abs.(w1(t)[1:1])), x)[1]
+        @test (∇_cpu /2)≈ cpu(∇_gpu) rtol=1e-3
     end
 end

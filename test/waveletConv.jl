@@ -1,4 +1,4 @@
-CWs = [Morlet(), Morlet(4π), dog1, paul16];
+CWs = [Morlet(), Morlet(4π), dog1, paul16, Morse(3,20,1)];
 inputSizes = ((305, 2), (256, 1, 4), 129);
 scales = [1, 8, 12];
 averagingLengths = (-2, 0, 2);
@@ -44,7 +44,7 @@ function compareWithWavelet(inputSize, cw, β, normalization, scale, averagingLe
     end
 end
 @testset "Wavelets.jl construction and application" begin
-    CWs = [Morlet(), Morlet(4π), dog1, paul16]
+    CWs = [Morlet(), Morlet(4π), dog1, paul16, Morse(3,20,1)]
     inputSizes = ((305, 2), (256, 1, 4), 129)
     scales = [1, 8, 12]
     averagingLengths = (0, 2, 4)
