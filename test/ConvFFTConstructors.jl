@@ -71,7 +71,10 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
                 1,
                 1],
             x̂)
-        @test all(isapprox.(abs.(diag(∇[1][:, :, 1, 1])), 2.0f0 / 31 / 21, rtol=1e-3))
+        expected = 2.0f0 / 31 / 21
+        diag_vals = abs.(diag(∇[1][:, :, 1, 1]))
+        @test isapprox(diag_vals[1], expected, rtol=1e-3)
+        @test all(isapprox.(diag_vals[2:end], 2 * expected, rtol=1e-3))
 
         ax = axes(x̂)[3:end-1]
         ∇ = Flux.gradient((x̂) -> FourierFilterFlux.applyWeight(x̂, shears.weight[1], usedInds,
@@ -81,7 +84,9 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
                 1,
                 1,
                 1], x̂)
-        @test all(isapprox.(abs.(diag(∇[1][:, :, 1, 1])), 2.0f0 / 31 / 21, rtol=1e-3))
+        diag_vals = abs.(diag(∇[1][:, :, 1, 1]))
+        @test isapprox(diag_vals[1], expected, rtol=1e-3)
+        @test all(isapprox.(diag_vals[2:end], 2 * expected, rtol=1e-3))
 
         ∇ = Flux.gradient((x̂) -> (shears.fftPlan\(x̂.*shears.weight[1]))[1, 1, 1, 1], x̂)
         @test all(abs.(diag(∇[1][:, :, 1, 1])) .≈ 1.0f0 / 31 * 2 / 21)
@@ -268,7 +273,11 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
         ∂(y)
         ∂(y) # repeated calls to the derivative were causing errors while argWrapper
         # was in use
-        @test all(isapprox.(abs.(∇[1][:, 1, 1]), 2.0f0 / 31, rtol=1e-3))
+        # @test all(isapprox.(abs.(∇[1][:, 1, 1]), 2.0f0 / 31, rtol=1e-3))
+        expected = 2.0f0 / 31
+        vals = abs.(∇[1][:, 1, 1])
+        @test isapprox(vals[1], expected, rtol=1e-3)
+        @test all(isapprox.(vals[2:end], 2 * expected, rtol=1e-3))
         # no bias, not analytic and real valued output
 
         # no bias, analytic (so complex valued)
@@ -311,7 +320,7 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
         padding = 5
         shears = ConvFFT(weightMatrix, nothing, originalSize, identity,
             plan = true, boundary = Pad(padding))
-        x = randn(21, 1, 10)
+        x = randn(Float32, 21, 1, 10)
         x̂ = pad(x, shears.bc.padBy)
         x̂ = shears.fftPlan * ifftshift(x̂, (1, 2))
         usedInds = (shears.bc.padBy[1] .+ (1:size(x, 1)),)
@@ -328,7 +337,10 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
                 1,
                 1],
             x̂)
-        @test all(isapprox.(abs.(∇[1][:, 1, 1]), 2.0f0 / 31, rtol=1e-3))
+        expected = 2.0f0 / 31
+        vals = abs.(∇[1][:, 1, 1])
+        @test isapprox(vals[1], expected, rtol=1e-3)
+        @test all(isapprox.(vals[2:end], 2 * expected, rtol=1e-3))
         #
 
         # no bias, not analytic and real valued output
@@ -337,7 +349,9 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
         # biased (and one of the others, doesn't matter which)
 
         ∇ = Flux.gradient((x̂) -> (shears.fftPlan\(x̂.*shears.weight[1]))[1, 1, 1, 1], x̂)
-        @test all(isapprox.(abs.(∇[1][:, :, 1, 1]), 1.0f0 / 31 * 2, rtol=1e-3))
+        diag_vals = abs.(∇[1][:, :, 1, 1])
+        @test isapprox(diag_vals[1], expected, rtol=1e-3)
+        @test all(isapprox.(diag_vals[2:end], 2 * expected, rtol=1e-3))
         sheared = shears(x)
         @test size(sheared) == (21, 1, 1, 10)
 
