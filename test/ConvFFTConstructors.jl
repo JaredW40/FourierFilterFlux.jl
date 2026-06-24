@@ -88,8 +88,10 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
         @test isapprox(diag_vals[1], expected, rtol=1e-3)
         @test all(isapprox.(diag_vals[2:end], 2 * expected, rtol=1e-3))
 
-        ∇ = Flux.gradient((x̂) -> (shears.fftPlan\(x̂.*shears.weight[1]))[1, 1, 1, 1], x̂)
-        @test all(abs.(diag(∇[1][:, :, 1, 1])) .≈ 1.0f0 / 31 * 2 / 21)
+        ∇ = Flux.gradient((x̂) -> sum((shears.fftPlan\(x̂.*shears.weight[1]))[1:1, 1:1, 1:1, 1:1]), x̂)
+        diag_vals = abs.(diag(∇[1][:, :, 1, 1]))
+        @test isapprox(diag_vals[1], expected, rtol=1e-3)
+        @test all(isapprox.(diag_vals[2:end], 2 * expected, rtol=1e-3))
         sheared = shears(x)
         @test size(sheared) == (21, 11, 1, 1, 10)
 
