@@ -1,7 +1,7 @@
 authors = ["dsweber2", "BoundaryValueProblems", "JaredW40"]
 name = "FourierFilterFlux"
 uuid = "3d7dfd45-6c90-4c9b-b697-194a05757159"
-version = "0.3.8"
+version = "0.4.0"
 
 [compat]
 CUDA = "6.1"
