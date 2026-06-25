@@ -4,7 +4,7 @@ using Zygote, Flux, Adapt, LinearAlgebra
 using AbstractFFTs, FFTW # TODO: check the license on FFTW and such
 using ContinuousWavelets
 using RecipesBase
-using CUDA
+using CUDA, cuDNN
 using Functors
 
 Functors.@leaf FFTW.rFFTWPlan
