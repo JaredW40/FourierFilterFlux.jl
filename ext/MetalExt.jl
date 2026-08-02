@@ -13,15 +13,13 @@ import MLDataDevices: MetalDevice, CPUDevice
     plan_rfft/irfft directly on MtlArray. Metal's native FFT support
     (Metal.jl 1.10+) is brand new, and its AbstractFFTs.RFFTAdjointStyle /
     IRFFTAdjointStyle coverage for real transforms is the thing under
-    suspicion for the original gradient-scaling bug -- see the AnalyticWavelet
-    discussion earlier in this thread. Routing everything through complex
-    input + full complex fft/ifft only ever needs the simpler
+    suspicion for the original gradient-scaling bug. Routing everything 
+    through complex input + full complex fft/ifft only ever needs the simpler
     FFTAdjointStyle, which is far more likely to be complete even in a very
     new backend. If Metal's real-transform adjoints turn out to already be
-    correct, this whole file could eventually be replaced by plain
-    plan_rfft/`\` calls mirroring the CPU code path -- worth revisiting once
-    the bare `rfft`/Zygote isolation test (from earlier in this thread) has
-    actually been run on real Metal hardware. =#
+    correct, this whole file could eventually be replaced by plain plan_rfft/`\` 
+    calls mirroring the CPU code path -- worth revisiting once the bare 
+    `rfft`/Zygote isolation test has actually been run on real Metal hardware. =#
 
 const _mtlfft_cache_lock      = ReentrantLock()
 const _mtlfft_fft_plan_cache  = Dict{Any,Any}()
@@ -49,13 +47,6 @@ end
 Zygote.@adjoint get_mtlfft_fft_plan(x, D)     = get_mtlfft_fft_plan(x, D),  _ -> (nothing, nothing)
 Zygote.@adjoint get_mtlfft_ifft_plan(wave, D) = get_mtlfft_ifft_plan(wave, D), _ -> (nothing, nothing)
 
-#=  Constrained to Metal's own plan/array types for the same reason CUDAExt
-    constrains its copy: `_apply_fft` is owned by FourierFilterFlux, so an
-    unconstrained adjoint here would collide with CUDAExt's if both
-    extensions were ever loaded in one session. `_apply_ifft` below has no
-    core definition -- it's a fresh name local to this module -- so it can't
-    collide with CUDAExt's `_apply_ifft` even though the name is identical;
-    they're different functions belonging to different modules. =#
 Zygote.@adjoint function _apply_fft(plan::Metal.MtlFFTPlan, x::MtlArray)
     y = _apply_fft(plan, x)
     function fft_pullback(Δ)
@@ -85,15 +76,15 @@ FourierFilterFlux._source_length(x̂::MtlArray, fftPlan::Tuple{MtlArray,Int,Int}
 
 Adapt.adapt(dev::MetalDevice, P::FFTW.rFFTWPlan) = Metal.functional() ? Metal.mtl(P) : P
 Adapt.adapt(dev::MetalDevice, P::FFTW.cFFTWPlan) = Metal.functional() ? Metal.mtl(P) : P
-# Reverse direction: cpu() hits the same fmap/leaf mechanism.
 Adapt.adapt(::CPUDevice, P::Metal.MtlFFTPlan) = adapt(Array, P)
 
-# Same conjugate-reflection / zero-padding logic as CUDAExt -- a fresh local
-# definition, not extending anything from core, so no collision risk there either.
+# Same conjugate-reflection / zero-padding logic as CUDAExt. 
 function _expand_weight_to_full_spectrum(w_half::AbstractArray, fullLen::Int, ::NonAnalyticMatching)
     isSourceOdd = mod(fullLen + 1, 2)
     outer = axes(w_half)[2:end]
-    cat(w_half, reverse(conj.(w_half[2:end-isSourceOdd, outer...]), dims=1), dims=1)
+    n = size(w_half, 1)
+    revIdx = (n - isSourceOdd):-1:2
+    cat(w_half, conj.(w_half[revIdx, outer...]), dims=1)
 end
 function _expand_weight_to_full_spectrum(w_half::AbstractArray, fullLen::Int, ::AnalyticWavelet)
     isSourceOdd = mod(fullLen + 1, 2)
@@ -107,11 +98,15 @@ end
 function _expand_weight_to_full_spectrum(w_half::AbstractArray, fullLen::Int, ::RealWaveletRealSignal)
     isSourceOdd = mod(fullLen + 1, 2)
     outer = axes(w_half)[2:end]
-    cat(w_half, reverse(conj.(w_half[2:end-isSourceOdd, outer...]), dims=1), dims=1)
+    n = size(w_half, 1)
+    revIdx = (n - isSourceOdd):-1:2
+    cat(w_half, conj.(w_half[revIdx, outer...]), dims=1)
 end
 function _expand_weight_to_full_spectrum(w_half::AbstractArray, fullLen::Int, ::RealWaveletComplexSignal)
     isSourceOdd = mod(fullLen + 1, 2)
-    cat(w_half, reverse(conj.(w_half[2:end-isSourceOdd]), dims=1), dims=1)
+    n = size(w_half, 1)
+    revIdx = (n - isSourceOdd):-1:2
+    cat(w_half, conj.(w_half[revIdx]), dims=1)
 end
 
 
