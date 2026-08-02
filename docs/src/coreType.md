@@ -72,7 +72,7 @@ address this, e.g. `Pad(6)`
 ```jldoctest 1DconvEx
 julia> W = ConvFFT(ŵ,nothing,(128,1,2),boundary= FourierFilterFlux.Pad(6))
 ┌ Warning: You didn't hand me a set of filters constructed with the boundary in mind. I'm going to adjust them to fit, this may not be what you intended
-└ @ FourierFilterFlux ~/work/FourierFilterFlux.jl/FourierFilterFlux.jl/src/FourierFilterFlux.jl:180
+└ @ FourierFilterFlux ~/work/FourierFilterFlux.jl/FourierFilterFlux.jl/src/FourierFilterFlux.jl:175
 ConvFFT[input=((128,), nfilters = 2, σ=identity, bc=Pad(6,)]  # 142 parameters
 
 julia> r =W(x); size(r)
