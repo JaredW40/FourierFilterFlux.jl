@@ -4,20 +4,15 @@ using Zygote, Flux, Adapt, LinearAlgebra
 using AbstractFFTs, FFTW # TODO: check the license on FFTW and such
 using ContinuousWavelets
 using RecipesBase
-using CUDA, cuDNN
+
 using Functors
 
 Functors.@leaf FFTW.rFFTWPlan
 Functors.@leaf FFTW.cFFTWPlan  
 Functors.@leaf FFTW.Plan
 
-const use_cuda = Ref(false)
-if CUDA.functional()
-    use_cuda[] = true
-end
-
 import Adapt: adapt
-export pad, originalDomain, formatJLD, getBatchSize
+export pad, originalDomain, getBatchSize
 export Periodic, Pad, ConvBoundary, Sym, analytic, outType, nFrames
 # layer types and constructors
 export ConvFFT, waveletLayer
