@@ -99,9 +99,7 @@ function _expand_weight_to_full_spectrum(w_half::AbstractArray, fullLen::Int, ::
 end
 
 
-#=  Forward pass on GPU: cast to complex, full FFT, elementwise filter, full IFFT. 
-    FIX 3 (applyBC/internalConvFFT): these are core, non-exported functions - 
-    imported at the top rather than left to resolve unqualified.=#
+#=  Forward pass on GPU: cast to complex, full FFT, elementwise filter, full IFFT. =#
 # GPU single-plan fft method: 
 function (shears::ConvFFT)(x::CuArray)
     xbc, usedInds = applyBC(x, shears.bc, ndims(shears.weight[1]))
@@ -178,7 +176,7 @@ end
 #=  Device transfer, dispatched on the *device type*, not on ConvFFT's own unconstrained 
     type parameters. CUDADevice/CPUDevice are concrete types owned by MLDataDevices, so 
     this cannot collide with MetalExt's methods for the same generic Adapt.adapt_structure 
-    function -- except in the CPUDevice direction, where both extensions target the same
+    function - except in the CPUDevice direction, where both extensions target the same
     `::CPUDevice` argument. The `A<:Tuple{Vararg{<:CuArray}}` constraint here (and the 
     mirrored `A<:Tuple{Vararg{<:MtlArray}}` constraint MetalExt must use) is what 
     disambiguates those two methods from each other.=#

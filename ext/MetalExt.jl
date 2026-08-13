@@ -9,18 +9,6 @@ using Zygote
 using AbstractFFTs, FFTW
 import MLDataDevices: MetalDevice, CPUDevice
 
-#=  Deliberately mirrors CUDAExt's design choice: never differentiate
-    plan_rfft/irfft directly on MtlArray. Metal's native FFT support
-    (Metal.jl 1.10+) is brand new, and its AbstractFFTs.RFFTAdjointStyle /
-    IRFFTAdjointStyle coverage for real transforms is the thing under
-    suspicion for the original gradient-scaling bug. Routing everything 
-    through complex input + full complex fft/ifft only ever needs the simpler
-    FFTAdjointStyle, which is far more likely to be complete even in a very
-    new backend. If Metal's real-transform adjoints turn out to already be
-    correct, this whole file could eventually be replaced by plain plan_rfft/`\` 
-    calls mirroring the CPU code path -- worth revisiting once the bare 
-    `rfft`/Zygote isolation test has actually been run on real Metal hardware. =#
-
 const _mtlfft_cache_lock      = ReentrantLock()
 const _mtlfft_fft_plan_cache  = Dict{Any,Any}()
 const _mtlfft_ifft_plan_cache = Dict{Any,Any}()

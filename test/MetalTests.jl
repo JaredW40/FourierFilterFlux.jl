@@ -18,8 +18,6 @@ if Metal.functional()
 
         ∇gpu = Zygote.gradient(t -> sum(cw(t)), cx)[1]
         ∇ = Zygote.gradient(t -> sum(w(t)), x)[1]
-        #∇gpu = Zygote.gradient(t -> Zygote.@showgrad(sum(Zygote.@showgrad(cw(t)))), cx)[1]#*Float32(1.9607842387072956)
-        #∇ = Zygote.gradient(t -> Zygote.@showgrad(sum(Zygote.@showgrad(w(t)))), x)[1]
         @test ∇ ≈ cpu(∇gpu) rtol=1e-5
         
         w1 = waveletLayer((100, 1, 1))
@@ -27,7 +25,7 @@ if Metal.functional()
         @test cw1(cx) ≈ gpu(w1(x)) rtol=1e-4
 
         Metal.@allowscalar ∇gpu2 = Zygote.gradient(t -> abs(cw1(t)[1]), cx)[1]
-        Metal.@allowscalar ∇2 = Zygote.gradient(t -> abs(w1(t)[1]), x)[1]#*Float32(1.9999998007889157)
+        Metal.@allowscalar ∇2 = Zygote.gradient(t -> abs(w1(t)[1]), x)[1]
         @test (∇2) ≈ cpu(∇gpu2) rtol=1e-3
     end
 
