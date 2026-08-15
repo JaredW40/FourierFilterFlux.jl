@@ -42,14 +42,44 @@ julia> r = W(x)
 [:, :, 1, 1] =
  0.0  0.0
  0.0  0.0
+ 0.0  0.0
+ 0.0  0.0
+ 0.0  0.0
+ 0.0  0.0
+ 0.0  0.0
+ 0.0  0.0
+ 0.0  0.0
+ 0.0  0.0
  ⋮
+ 0.0  0.0
+ 0.0  0.0
+ 0.0  0.0
+ 0.0  0.0
+ 0.0  0.0
+ 0.0  0.0
+ 0.0  0.0
  0.0  0.0
  0.0  0.0
 
 [:, :, 1, 2] =
  -0.359729     -2.08167e-17
   1.08721      -1.38778e-17
+ -0.41959      -4.85723e-17
+  0.71891      -9.71445e-17
+  0.420247     -3.63019e-17
+ -0.685671     -1.63206e-16
+ -2.32935e-17  -5.7901e-17
+ -3.71598e-18  -6.50098e-17
+ -2.77556e-17  -7.03136e-17
+  6.77052e-17  -1.64924e-17
   ⋮
+  0.0           2.77556e-17
+  5.55112e-17   1.11022e-16
+  1.38778e-17   0.0
+  4.16334e-17   0.0
+  7.63278e-17  -3.28478e-17
+  9.71445e-17   3.1535e-17
+ -7.17909e-17   3.94966e-17
   1.27045e-17  -1.249e-16
  -9.26904e-17  -2.77556e-17
 ```
@@ -121,7 +151,7 @@ julia> targetConv = ConvFFT(fitThis, nothing, (127,352,1,10))
 ConvFFT[input=((127, 352), nfilters = 3, σ=identity, bc=Periodic()]  # 67_584 parameters
 
 julia> sum(norm.(map(-, targetConv.weight, filt.weight)) .^ 2) / sum(norm.(targetConv.weight) .^ 2) # the relative error
-1.0039214694920346
+1.0039214694920395
 
 julia> loss(m, x) = norm(m(x) - targetConv(x))
 loss (generic function with 1 method)
@@ -135,7 +165,7 @@ julia> for x in genEx(100)
        end
 
 julia> sum(norm.(map(-, targetConv.weight, filt.weight)) .^ 2) / sum(norm.(targetConv.weight) .^ 2) # the relative error
-0.8207500995548698
+0.8207497061757885
 
 ```
 

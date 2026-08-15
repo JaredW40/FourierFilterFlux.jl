@@ -1,6 +1,7 @@
 using FourierFilterFlux, ContinuousWavelets
 using Flux, FFTW, Wavelets, Zygote
 using Logging, Test, LinearAlgebra
+using Functors, AbstractFFTs
 
 #= 
         GROUP=All    (default) attempt every backend this environment has
@@ -20,6 +21,7 @@ const GROUP = get(ENV, "GROUP", "All")
     include("ConvFFTConstructors.jl")
     include("ConvFFTtransform.jl")
     include("waveletConv.jl")
+    include("functorContract.jl")
 
     if GROUP in ("All", "CUDA")
         try

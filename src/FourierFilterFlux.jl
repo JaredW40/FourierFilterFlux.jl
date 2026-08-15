@@ -101,8 +101,6 @@ struct ConvFFT{D,OT,F,A,V,PD,P,T,An}
     analytic::An
 end
 
-Functors.@leaf ConvFFT
-
 # the no frills constructor; useful for functor
 function ConvFFT(σ, weight, bias, bc, fftPlan, analytic; trainable = true)
     if weight isa AbstractArray
