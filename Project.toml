@@ -1,6 +1,6 @@
 name = "FourierFilterFlux"
 uuid = "3d7dfd45-6c90-4c9b-b697-194a05757159"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["dsweber2", "BoundaryValueProblems", "JaredW40", "briancknight"]
 
 [deps]
@@ -12,6 +12,7 @@ Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Functors = "d9f16b24-f501-4c13-a1f2-28368ffc5196"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MLDataDevices = "7e8f7934-dd98-4c1a-8fe8-92b47a384d40"
+Metal = "dde4c033-4e86-420c-a63e-0dd931031962"
 NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
 Preferences = "21216c6a-2e73-6563-6e65-726566657250"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
@@ -24,7 +25,6 @@ CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 CUDA_Runtime_Discovery = "1af6417a-86b4-443c-805f-a4643ffb695f"
 cuDNN = "02a925ec-e4fe-4b08-9a7e-0d78e3d38ccd"
 cuFFT = "533571aa-0936-420e-b4be-9c66f5f626ca"
-Metal = "dde4c033-4e86-420c-a63e-0dd931031962"
 
 [extensions]
 CUDAExt = ["CUDA", "cuDNN", "cuFFT"]
@@ -35,7 +35,7 @@ AbstractFFTs = "1"
 Adapt = "4"
 CUDA = "6"
 CUDA_Runtime_Discovery = "2.1"
-ContinuousWavelets = "1" # Should be (after GPU chnages) 1.2.0 or higher. 
+ContinuousWavelets = "1"
 FFTW = "1"
 Flux = "0.16"
 Functors = "0.5.2"
