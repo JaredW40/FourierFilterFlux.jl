@@ -266,4 +266,6 @@ include("transforms.jl")
 include("Utils.jl")
 include("convFFTConstructors.jl")
 
+Adapt.adapt_structure(to, x::AbstractVector{<:TransformTypes}) = x
+
 end # module
