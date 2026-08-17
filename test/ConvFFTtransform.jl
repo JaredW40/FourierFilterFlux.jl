@@ -23,29 +23,6 @@
         @test abs.(minimalTransform(shears, init)) ≈ res
     end
 
-    # Run tests on both CPU and GPU (if available)
-    # Begin with 2D test, then 1D later. 
-    if CUDA.functional() 
-        @testset "ConvFFT 2D - GPU" begin
-            originalSize = (10, 10, 1, 2)
-            init = zeros(Float32, originalSize)
-            init[5, 5, 1, 2] = Float32(1)
-            
-            # Create CPU version first
-            shears_cpu = ConvFFT(originalSize)
-            res_cpu = shears_cpu(init)
-            
-            # Move SAME model to GPU (not creating a new one)
-            init_gpu = CuArray(init)
-            shears_gpu = gpu(shears_cpu)
-            res_gpu = shears_gpu(init_gpu)
-            
-            @test res_gpu isa CuArray
-            @test size(res_gpu) == (10, 10, 5, 1, 2)
-            @test Array(res_gpu) ≈ res_cpu rtol=1e-1
-        end
-    end
-
     @testset "ConvFFT 1D - CPU" begin
         originalSize = (10, 1, 2)
         init = zeros(Float32, originalSize)
@@ -67,26 +44,5 @@
         shears = ConvFFT(originalSize, 5, abs, nConvDims = 1, boundary = Pad(-1))
         res = shears(init)
         @test abs.(minimalTransform(shears, init)) ≈ res
-    end
-    
-    if CUDA.functional()
-        @testset "ConvFFT 1D - GPU" begin
-            originalSize = (10, 1, 2)
-            init = zeros(Float32, originalSize)
-            init[5, 1, 2] = Float32(1)
-            
-            # Create CPU version first
-            shears_cpu = ConvFFT(originalSize, nConvDims = 1, boundary = Pad(-1))
-            res_cpu = shears_cpu(init)
-            
-            # Move SAME model to GPU
-            init_gpu = CuArray(init)
-            shears_gpu = gpu(shears_cpu)
-            res_gpu = shears_gpu(init_gpu)
-            
-            @test res_gpu isa CuArray
-            @test size(res_gpu) == (10, 5, 1, 2)
-            @test cpu(res_gpu) ≈ res_cpu rtol=1e-5
-        end
     end
 end

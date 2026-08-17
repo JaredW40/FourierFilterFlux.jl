@@ -101,21 +101,6 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
         shears = ConvFFT(weightMatrix, nothing, originalSize, identity,
             plan = true, boundary = Pad(padding))
 
-
-        # convert to a gpu version
-        if CUDA.functional()
-            gpuVer = shears |> gpu
-            @test gpuVer.weight[1] isa CuArray
-            # @test gpuVer.fftPlan isa cuFFT.CuFFTPlan
-            @test gpuVer.fftPlan isa AbstractFFTs.Plan
-            if !(gpuVer.weight[1] isa CuArray)
-                println("gpuVer.weight is of type $(typeof(gpuVer.weight))")
-            end
-            #if !(gpuVer.fftPlan isa cuFFT.CuFFTPlan)
-            if !(gpuVer.fftPlan isa AbstractFFTs.Plan)    
-                println("gpuVer.fftPlan is of type $(typeof(gpuVer.fftPlan))")
-            end
-        end
         # extra channel dimension
         originalSize = (20, 10, 16, 1, 10)
         shears = ConvFFT(randn(Float32, 16, 20, 3), nothing, originalSize, abs,
@@ -343,7 +328,6 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
         vals = abs.(∇[1][:, 1, 1])
         @test isapprox(vals[1], expected, rtol=1e-3)
         @test all(isapprox.(vals[2:end], 2 * expected, rtol=1e-3))
-        #
 
         # no bias, not analytic and real valued output
         # no bias, analytic (so complex valued)
@@ -357,13 +341,6 @@ using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
         sheared = shears(x)
         @test size(sheared) == (21, 1, 1, 10)
 
-        # convert to a gpu version
-        if CUDA.functional()
-            gpuVer = shears |> gpu
-            @test gpuVer.weight[1] isa CuArray
-            # @test gpuVer.fftPlan isa cuFFT.CuFFTPlan
-            @test gpuVer.fftPlan isa AbstractFFTs.Plan
-        end
         # extra channel dimension
         originalSize = (20, 16, 1, 10)
         shears = ConvFFT(randn(Float32, 16, 3), nothing, originalSize, abs,

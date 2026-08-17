@@ -1,35 +1,36 @@
-if CUDA.functional()
-    @testset "CUDA methods" begin
+if Metal.functional()
+    @testset "Metal methods" begin
         w = ConvFFT((100,), nConvDims = 1)
-        @test cu(w.fftPlan) isa cuFFT.CuFFTPlan
+        @test mtl(w.fftPlan) isa Metal.MtlFFTPlan # does gpu work on the fft plans when applied directly?
         cw = gpu(w)
-        @test cw.weight isa NTuple{N,CuArray} where {N}
-        @test cw.fftPlan isa cuFFT.CuFFTPlan
+        @test cw.weight isa NTuple{N,MtlArray} where {N} # does gpu work on the weights?
+        ### Right now the cw.fftPlan is still an FFTW plan... July 17, 2026
+        @test cw.fftPlan isa Metal.MtlFFTPlan # does gpu work on the fftPlan?
         w0 = cpu(cw)
-        @test w0.weight isa NTuple{N,Array} where {N}
-        @test w0.fftPlan isa FFTW.rFFTWPlan
-
+        @test w0.weight isa NTuple{N,Array} where {N} # does cpu work on the weights?
+        @test w0.fftPlan isa FFTW.rFFTWPlan # does cpu work on the fftPlan?
+        
         x = randn(Float32, 100)
         cx = gpu(x)
-        @test cw(cx) isa CuArray
-        @test cw(cx) ≈ gpu(w(x)) rtol=1e-6
+        @test cw(cx) isa MtlArray
+        @test cw(cx) ≈ gpu(w(x)) rtol=1e-6 # Metal and cpu version get the same result approximately
         cw(cx)
 
         ∇gpu = Zygote.gradient(t -> sum(cw(t)), cx)[1]
         ∇ = Zygote.gradient(t -> sum(w(t)), x)[1]
         @test ∇ ≈ cpu(∇gpu) rtol=1e-5
-
+        
         w1 = waveletLayer((100, 1, 1))
         cw1 = gpu(w1)
         @test cw1(cx) ≈ gpu(w1(x)) rtol=1e-4
 
-        ∇_gpu = Zygote.gradient(t -> sum(abs.(cw1(t)[1:1])), cx)[1]
-        ∇_cpu = Zygote.gradient(t -> sum(abs.(w1(t)[1:1])), x)[1]
-        @test (∇_cpu) ≈ cpu(∇_gpu) rtol=1e-3
+        Metal.@allowscalar ∇gpu2 = Zygote.gradient(t -> abs(cw1(t)[1]), cx)[1]
+        Metal.@allowscalar ∇2 = Zygote.gradient(t -> abs(w1(t)[1]), x)[1]
+        @test (∇2) ≈ cpu(∇gpu2) rtol=1e-3
     end
 
 
-    @testset "ConvFFT transform - CUDA" begin
+    @testset "ConvFFT transform - Metal" begin
         @testset "ConvFFT 2D - CPU" begin
             originalSize = (10, 10, 1, 2)
             tmp = zeros(originalSize)
@@ -54,19 +55,21 @@ if CUDA.functional()
             @test abs.(minimalTransform(shears, init)) ≈ res
         end
 
-        @testset "ConvFFT 2D - CUDA" begin
+        @testset "ConvFFT 2D - Metal" begin
             originalSize = (10, 10, 1, 2)
             init = zeros(Float32, originalSize)
             init[5, 5, 1, 2] = Float32(1)
-
+ 
+            # Create CPU version first
             shears_cpu = ConvFFT(originalSize)
             res_cpu = shears_cpu(init)
-
-            init_gpu = CuArray(init)
+ 
+            # Move SAME model to GPU (not creating a new one)
+            init_gpu = MtlArray(init)
             shears_gpu = gpu(shears_cpu)
             res_gpu = shears_gpu(init_gpu)
-
-            @test res_gpu isa CuArray
+ 
+            @test res_gpu isa MtlArray
             @test size(res_gpu) == (10, 10, 5, 1, 2)
             @test Array(res_gpu) ≈ res_cpu rtol=1e-1
         end
@@ -94,19 +97,21 @@ if CUDA.functional()
             @test abs.(minimalTransform(shears, init)) ≈ res
         end
 
-        @testset "ConvFFT 1D - CUDA" begin
+        @testset "ConvFFT 1D - Metal" begin
             originalSize = (10, 1, 2)
             init = zeros(Float32, originalSize)
             init[5, 1, 2] = Float32(1)
-
+ 
+            # Create CPU version first
             shears_cpu = ConvFFT(originalSize, nConvDims = 1, boundary = Pad(-1))
             res_cpu = shears_cpu(init)
-
-            init_gpu = CuArray(init)
+ 
+            # Move SAME model to GPU
+            init_gpu = MtlArray(init)
             shears_gpu = gpu(shears_cpu)
             res_gpu = shears_gpu(init_gpu)
-
-            @test res_gpu isa CuArray
+ 
+            @test res_gpu isa MtlArray
             @test size(res_gpu) == (10, 5, 1, 2)
             @test cpu(res_gpu) ≈ res_cpu rtol=1e-5
         end
@@ -114,12 +119,12 @@ if CUDA.functional()
 
 
     using FourierFilterFlux: applyWeight, applyBC, internalConvFFT
-    @testset "ConvFFT constructors - CUDA" begin
+    @testset "ConvFFT constructors - Metal" begin
         @testset "Utils" begin
             explicit = [1 0 0; 0 1 0; 0 0 1; zeros(2, 3)]
             @test maximum(abs.(iden_perturbed_gaussian(5, 3) - explicit)) < 1
         end
-        @testset "2D constructors - CUDA" begin
+        @testset "2D constructors - Metal" begin
             # normal size
             originalSize = (21, 11, 1, 10)
             x = randn(Float32, originalSize)
@@ -213,10 +218,12 @@ if CUDA.functional()
             shears = ConvFFT(weightMatrix, nothing, originalSize, identity,
                 plan = true, boundary = Pad(padding))
 
+
+            # convert to a compatible gpu version
             gpuVer = shears |> gpu
-            @test gpuVer.weight[1] isa CuArray
+            @test gpuVer.weight[1] isa MtlArray
             @test gpuVer.fftPlan isa AbstractFFTs.Plan
-            if !(gpuVer.weight[1] isa CuArray)
+            if !(gpuVer.weight[1] isa MtlArray)
                 println("gpuVer.weight is of type $(typeof(gpuVer.weight))")
             end
             if !(gpuVer.fftPlan isa AbstractFFTs.Plan)    
@@ -252,7 +259,7 @@ if CUDA.functional()
         end
 
 
-        @testset "1D constructors - CUDA" begin
+        @testset "1D constructors - Metal" begin
             # normal size
             originalSize = (21, 1, 10)
             x = randn(Float32, originalSize)
@@ -308,6 +315,7 @@ if CUDA.functional()
                 @test all(abs.(∇[1][:, 1, 3]) .> 0)
             end
 
+            # check that the identity ConvFFT is, in fact, an identity
             @testset "Identity tests" begin
                 weightMatrix = ones(Float32, (21 + 10) >> 1 + 1, 1)
                 weightMatrix = cat(weightMatrix, weightMatrix, dims = 2)
@@ -331,7 +339,9 @@ if CUDA.functional()
                 @test shears(x)[:, 1, :, :] ≈ x
             end
 
+            # check that global multiplication in the Fourier domain is just multiplication
             @testset "times 2" begin
+
                 weightMatrix = 2 .* ones(Float32, (21 + 10) >> 1 + 1, 1)
                 padding = 5
                 shears = ConvFFT(weightMatrix, nothing, originalSize, identity,
@@ -339,11 +349,14 @@ if CUDA.functional()
                 x = randn(21, 1, 10)
                 @test shears(x)[:, 1, :, :] ≈ 2 .* x
 
+
+
                 weightMatrix = 2 .* ones(Float32, 21 + 1, 1)
                 shears = ConvFFT(weightMatrix, nothing, originalSize, identity,
                     plan = true, boundary = Sym())
                 x = randn(21, 1, 10)
                 @test shears(x)[:, 1, :, :] ≈ 2 .* x
+
 
                 weightMatrix = 2 .* ones(Float32, 21 >> 1 + 1, 1)
                 shears = ConvFFT(weightMatrix, nothing, originalSize, identity,
@@ -351,6 +364,7 @@ if CUDA.functional()
                 x = randn(Float32, 21, 1, 10)
                 @test shears(x)[:, 1, :, :] ≈ 2 .* x
             end
+
 
             weight = (2 .* ones(Complex{Float32}, (21 + 10) >> 1 + 1),)
             bc = Pad(5)
@@ -373,12 +387,16 @@ if CUDA.functional()
                     1],
                 x̂)
             ∂(y)
-            ∂(y)
+            ∂(y) # repeated calls to the derivative were causing errors while argWrapper
+            # was in use
+            # @test all(isapprox.(abs.(∇[1][:, 1, 1]), 2.0f0 / 31, rtol=1e-3))
             expected = 2.0f0 / 31
             vals = abs.(∇[1][:, 1, 1])
             @test isapprox(vals[1], expected, rtol=1e-3)
             @test all(isapprox.(vals[2:end], 2 * expected, rtol=1e-3))
+            # no bias, not analytic and real valued output
 
+            # no bias, analytic (so complex valued)
             fftPlan = plan_fft(xbc, (1,))
             ∇ = Flux.gradient((x̂) -> abs(applyWeight(x̂,
                     weight[1],
@@ -392,6 +410,7 @@ if CUDA.functional()
                 x̂)
             @test all(abs.(∇[1][:, 1, 1]) .≈ 2.0f0 / 31)
 
+            # no bias, not analytic, complex valued, but still symmetric
             real(applyWeight(x̂,
                 weight[1],
                 usedInds,
@@ -412,6 +431,7 @@ if CUDA.functional()
             @test all(abs.(∇[1][2:end, 1, 1]) .≈ 2 * 2.0f0 / 31)
             @test abs(∇[1][1, 1, 1]) ≈ 2.0f0 / 31
 
+            # internal methods tests
             weightMatrix = 2 .* ones(Float32, (21 + 10) >> 1 + 1, 1)
             padding = 5
             shears = ConvFFT(weightMatrix, nothing, originalSize, identity,
@@ -438,6 +458,11 @@ if CUDA.functional()
             @test isapprox(vals[1], expected, rtol=1e-3)
             @test all(isapprox.(vals[2:end], 2 * expected, rtol=1e-3))
 
+            # no bias, not analytic and real valued output
+            # no bias, analytic (so complex valued)
+            # no bias, not analytic, complex valued, but still symmetric
+            # biased (and one of the others, doesn't matter which)
+
             ∇ = Flux.gradient((x̂) -> (shears.fftPlan\(x̂.*shears.weight[1]))[1, 1, 1, 1], x̂)
             diag_vals = abs.(∇[1][:, :, 1, 1])
             @test isapprox(diag_vals[1], expected, rtol=1e-3)
@@ -445,8 +470,9 @@ if CUDA.functional()
             sheared = shears(x)
             @test size(sheared) == (21, 1, 1, 10)
 
+            # convert to a compatible gpu version
             gpuVer = shears |> gpu
-            @test gpuVer.weight[1] isa CuArray
+            @test gpuVer.weight[1] isa MtlArray
             @test gpuVer.fftPlan isa AbstractFFTs.Plan
 
             # extra channel dimension

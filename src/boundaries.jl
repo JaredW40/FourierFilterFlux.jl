@@ -75,7 +75,8 @@ function applyBC(x, bc::Periodic, nd)
 end
 
 function applyBC(x, bc::Sym, nd)
-    flipThisDim = cat(x, reverse(x, dims = nd), dims = nd)
+    revIdx = ntuple(i -> i == nd ? (size(x, nd):-1:1) : Colon(), ndims(x))
+    flipThisDim = cat(x, x[revIdx...], dims = nd)
     if nd == 1
         return flipThisDim, axes(x)[1:nd]
     else

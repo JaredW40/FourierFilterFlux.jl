@@ -9,7 +9,8 @@ on:
     tags: '*'
   pull_request: # run when pull requests are made
     paths:
-    - src/* 
+    - src/*
+    - ext/*
     - test/runtests.jl
     - Manifest.toml
     - Project.toml
@@ -21,7 +22,6 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.10'
           - '1.12'
         os:
           - ubuntu-latest
@@ -34,9 +34,6 @@ jobs:
         include:
           - os: macOS-latest
             arch: aarch64
-            version: '1.10'
-          - os: macOS-latest
-            arch: aarch64
             version: '1.12'
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +43,16 @@ jobs:
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
+      
+      - name: Add CUDA stack (Linux only)
+        if: runner.os == 'Linux'
+        run: julia --project=. -e 'using Pkg; Pkg.add(["CUDA", "cuDNN", "cuFFT"])'
+      - name: Add Metal (macOS only)
+        if: runner.os == 'macOS'
+        run: julia --project=. -e 'using Pkg; Pkg.add("Metal")'
       - uses: julia-actions/julia-runtest@v1
+        env:
+          GROUP: ${{ runner.os == 'Linux' && 'CUDA' || runner.os == 'macOS' && 'Metal' || 'CPU' }}
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v4
         with:
