@@ -174,10 +174,10 @@ function Adapt.adapt_structure(dev::MetalDevice, cft::ConvFFT{D,OT,F,A,V,PD,P,T,
         cft.σ, mtlw, mtlb, cft.bc, mtlf, cft.analytic)
 end
 
-# A<:Tuple{Vararg{<:MtlArray}} is what lets this coexist with CUDAExt's own
+# A<:Tuple{Vararg{MtlArray}} is what lets this coexist with CUDAExt's own
 # ::CPUDevice method for the same generic Adapt.adapt_structure function. 
 function Adapt.adapt_structure(::CPUDevice,
-        cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A<:Tuple{Vararg{<:MtlArray}},V,PD,P,T,An}
+        cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A<:Tuple{Vararg{MtlArray}},V,PD,P,T,An}
     cpw = map(w -> adapt(Array, w), cft.weight)
     cpb = adapt(Array, cft.bias)
     cpf = cft.fftPlan isa Tuple ? map(p -> adapt(Array, p), cft.fftPlan) : adapt(Array, cft.fftPlan)
