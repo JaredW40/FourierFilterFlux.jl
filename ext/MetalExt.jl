@@ -160,9 +160,15 @@ Metal.mtl(P::FFTW.cFFTWPlan) = Metal.functional() ? plan_fft(Metal.mtl(zeros(elt
 Metal.mtl(P::Metal.MtlFFTPlan) = P
 
 _mtlPlanIsRealInput(::Metal.MtlFFTPlan{T1,T2}) where {T1,T2} = (T1 <: Real) || (T2 <: Real)
+
+function _canonRegion(r) # Properly canonicalize a region specifier for FFTW/Metal. 
+    rs = collect(Int, r)
+    return (length(rs) == 1 || all(diff(rs) .== 1)) ? (rs[begin]:rs[end]) : Tuple(rs)
+end
+
 function Adapt.adapt(::Type{<:Array}, p::Metal.MtlFFTPlan)
     sz = size(p)
-    region = p.region
+    region = _canonRegion(p.region)
     if _mtlPlanIsRealInput(p)
         plan_rfft(zeros(Float32, sz), region)
     else
