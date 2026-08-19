@@ -46,7 +46,7 @@ jobs:
       
       - name: Add CUDA stack (Linux only)
         if: runner.os == 'Linux'
-        run: julia --project=. -e 'using Pkg; Pkg.add(["CUDA", "cuDNN", "cuFFT"])'
+        run: julia --project=. -e 'using Pkg; Pkg.add(["CUDA", "cuFFT"])'
       - name: Add Metal (macOS only)
         if: runner.os == 'macOS'
         run: julia --project=. -e 'using Pkg; Pkg.add("Metal")'

@@ -25,10 +25,10 @@ const GROUP = get(ENV, "GROUP", "All")
 
     if GROUP in ("All", "CUDA")
         try
-            using CUDA, cuDNN, cuFFT
+            using CUDA, cuFFT
             include("CUDATests.jl")
         catch e
-            @info "CUDA/cuDNN/cuFFT not available in this environment -- skipping CUDATests.jl" exception=e
+            @info "CUDA/cuFFT not available in this environment -- skipping CUDATests.jl" exception=e
         end
     end
 
