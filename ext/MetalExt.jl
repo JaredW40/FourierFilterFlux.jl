@@ -159,12 +159,16 @@ Metal.mtl(P::FFTW.rFFTWPlan) = Metal.functional() ? plan_rfft(Metal.mtl(zeros(re
 Metal.mtl(P::FFTW.cFFTWPlan) = Metal.functional() ? plan_fft(Metal.mtl(zeros(eltype(P), P.sz)), P.region) : P
 Metal.mtl(P::Metal.MtlFFTPlan) = P
 
-function Adapt.adapt(::Type{<:Array}, x::Metal.MtlFFTPlan)
-    sz = size(x)
-    eltype(x) <: Real ? plan_rfft(zeros(real(eltype(x)), sz), 1:length(sz)) :
-                         plan_fft(zeros(eltype(x), sz), 1:length(sz))
+_mtlPlanIsRealInput(::Metal.MtlFFTPlan{T1,T2}) where {T1,T2} = (T1 <: Real) || (T2 <: Real)
+function Adapt.adapt(::Type{<:Array}, p::Metal.MtlFFTPlan)
+    sz = size(p)
+    region = p.region
+    if _mtlPlanIsRealInput(p)
+        plan_rfft(zeros(Float32, sz), region)
+    else
+        plan_fft(zeros(ComplexF32, sz), region)
+    end
 end
-
 
 function Adapt.adapt_structure(dev::MetalDevice, cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A,V,PD,P,T,An}
     mtlw = map(w -> Metal.mtl(w), cft.weight)
