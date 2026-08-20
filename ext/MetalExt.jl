@@ -159,12 +159,22 @@ Metal.mtl(P::FFTW.rFFTWPlan) = Metal.functional() ? plan_rfft(Metal.mtl(zeros(re
 Metal.mtl(P::FFTW.cFFTWPlan) = Metal.functional() ? plan_fft(Metal.mtl(zeros(eltype(P), P.sz)), P.region) : P
 Metal.mtl(P::Metal.MtlFFTPlan) = P
 
-function Adapt.adapt(::Type{<:Array}, x::Metal.MtlFFTPlan)
-    sz = size(x)
-    eltype(x) <: Real ? plan_rfft(zeros(real(eltype(x)), sz), 1:length(sz)) :
-                         plan_fft(zeros(eltype(x), sz), 1:length(sz))
+_mtlPlanIsRealInput(::Metal.MtlFFTPlan{T1,T2}) where {T1,T2} = (T1 <: Real) || (T2 <: Real)
+
+function _canonRegion(r) # Properly canonicalize a region specifier for FFTW/Metal. 
+    rs = collect(Int, r)
+    return (length(rs) == 1 || all(diff(rs) .== 1)) ? (rs[begin]:rs[end]) : Tuple(rs)
 end
 
+function Adapt.adapt(::Type{<:Array}, p::Metal.MtlFFTPlan)
+    sz = size(p)
+    region = _canonRegion(p.region)
+    if _mtlPlanIsRealInput(p)
+        plan_rfft(zeros(Float32, sz), region)
+    else
+        plan_fft(zeros(ComplexF32, sz), region)
+    end
+end
 
 function Adapt.adapt_structure(dev::MetalDevice, cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A,V,PD,P,T,An}
     mtlw = map(w -> Metal.mtl(w), cft.weight)
@@ -174,10 +184,10 @@ function Adapt.adapt_structure(dev::MetalDevice, cft::ConvFFT{D,OT,F,A,V,PD,P,T,
         cft.σ, mtlw, mtlb, cft.bc, mtlf, cft.analytic)
 end
 
-# A<:Tuple{Vararg{<:MtlArray}} is what lets this coexist with CUDAExt's own
+# A<:Tuple{Vararg{MtlArray}} is what lets this coexist with CUDAExt's own
 # ::CPUDevice method for the same generic Adapt.adapt_structure function. 
 function Adapt.adapt_structure(::CPUDevice,
-        cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A<:Tuple{Vararg{<:MtlArray}},V,PD,P,T,An}
+        cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A<:Tuple{Vararg{MtlArray}},V,PD,P,T,An}
     cpw = map(w -> adapt(Array, w), cft.weight)
     cpb = adapt(Array, cft.bias)
     cpf = cft.fftPlan isa Tuple ? map(p -> adapt(Array, p), cft.fftPlan) : adapt(Array, cft.fftPlan)

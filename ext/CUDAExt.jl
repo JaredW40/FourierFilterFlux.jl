@@ -177,8 +177,8 @@ end
     type parameters. CUDADevice/CPUDevice are concrete types owned by MLDataDevices, so 
     this cannot collide with MetalExt's methods for the same generic Adapt.adapt_structure 
     function - except in the CPUDevice direction, where both extensions target the same
-    `::CPUDevice` argument. The `A<:Tuple{Vararg{<:CuArray}}` constraint here (and the 
-    mirrored `A<:Tuple{Vararg{<:MtlArray}}` constraint MetalExt must use) is what 
+    `::CPUDevice` argument. The `A<:Tuple{Vararg{CuArray}}` constraint here (and the 
+    mirrored `A<:Tuple{Vararg{MtlArray}}` constraint MetalExt must use) is what 
     disambiguates those two methods from each other.=#
 function Adapt.adapt_structure(dev::CUDADevice, cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A,V,PD,P,T,An}
     cuw = map(w -> CUDA.cu(w), cft.weight)
@@ -187,7 +187,7 @@ function Adapt.adapt_structure(dev::CUDADevice, cft::ConvFFT{D,OT,F,A,V,PD,P,T,A
     return ConvFFT{D,OT,F,typeof(cuw),typeof(cub),PD,typeof(cuf),T,An}(cft.σ, cuw, cub, cft.bc, cuf, cft.analytic)
 end
  
-function Adapt.adapt_structure(::CPUDevice, cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A<:Tuple{Vararg{<:CuArray}},V,PD,P,T,An}
+function Adapt.adapt_structure(::CPUDevice, cft::ConvFFT{D,OT,F,A,V,PD,P,T,An}) where {D,OT,F,A<:Tuple{Vararg{CuArray}},V,PD,P,T,An}
     cpw = map(w -> adapt(Array, w), cft.weight)
     cpb = adapt(Array, cft.bias)
     cpf = cft.fftPlan isa Tuple ? map(p -> adapt(Array, p), cft.fftPlan) : adapt(Array, cft.fftPlan)
