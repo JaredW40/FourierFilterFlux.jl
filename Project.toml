@@ -1,6 +1,6 @@
 name = "FourierFilterFlux"
 uuid = "3d7dfd45-6c90-4c9b-b697-194a05757159"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["dsweber2", "BoundaryValueProblems", "JaredW40", "briancknight"]
 
 [deps]
